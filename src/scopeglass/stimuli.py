@@ -69,6 +69,39 @@ GARDEN_PATH = [
 ]
 
 
+# NP/S: the following noun may be an object or the subject of a sentential
+# complement. "Insisted" is the shared clause-selecting control.
+NP_S = [
+    ("editor", "knew", "author", "was", " exhausted."),
+    ("producer", "heard", "singer", "had", " lost her voice."),
+    ("guard", "suspected", "prisoner", "would", " escape."),
+    ("curator", "noticed", "painter", "was", " late."),
+    ("lawyer", "remembered", "witness", "had", " disappeared."),
+    ("director", "saw", "actor", "would", " return."),
+    ("nurse", "discovered", "pilot", "was", " injured."),
+    ("officer", "reported", "driver", "had", " stopped."),
+    ("landlord", "forgot", "neighbor", "was", " missing."),
+    ("teacher", "understood", "student", "would", " arrive."),
+    ("host", "admitted", "visitor", "had", " left."),
+    ("coach", "knew", "athlete", "was", " ready."),
+]
+
+
+def generate_np_s() -> list[Stimulus]:
+    rows = []
+    for i, (subject, verb, noun, target, tail) in enumerate(NP_S):
+        item = f"nps-{i:02d}"
+        for ambiguity, boundary in product(("ambiguous", "control"), ("absent", "that")):
+            matrix_verb = verb if ambiguity == "ambiguous" else "insisted"
+            cue = " that" if boundary == "that" else ""
+            rows.append(Stimulus(
+                f"{item}-{ambiguity}-{boundary}", item, "np_s",
+                f"The {subject} {matrix_verb}{cue} the {noun}", f" {target}", tail,
+                {"ambiguity": ambiguity, "boundary": boundary},
+            ))
+    return rows
+
+
 def generate(experiment="all") -> list[Stimulus]:
     if experiment not in {"all", "agreement", "polarity", "garden_path"}:
         raise ValueError(f"Unknown experiment: {experiment}")
