@@ -13,7 +13,7 @@ class ToyScorer:
 
     def score(self, row: Stimulus) -> dict:
         f = row.factors
-        if row.experiment == "garden_path":
+        if row.experiment in {"garden_path", "np_s"}:
             bits = 4.0 + (f["boundary"] == "absent") * (
                 3.0 if f["ambiguity"] == "ambiguous" else 0.5
             )

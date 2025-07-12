@@ -7,6 +7,7 @@ from itertools import product
 from statistics import mean
 
 DESIGNS = {
+    "np_s": (("ambiguity", "boundary"), (("ambiguous", "control"), ("absent", "that"))),
     "garden_path": (("ambiguity", "boundary"), (("ambiguous", "control"), ("absent", "comma"))),
     "agreement": (("head", "distractor", "verb"), (("sg", "pl"),) * 3),
     "polarity": (
@@ -16,6 +17,10 @@ DESIGNS = {
 }
 
 LABELS = {
+    "np_s": (
+        "NP/S disambiguation interaction",
+        "Positive: the missing-that cost is larger after the NP/S-ambiguous verb.",
+    ),
     "garden_path": (
         "Garden-path interaction",
         "Positive: the missing-comma cost is larger after the ambiguous verb.",
@@ -90,7 +95,11 @@ def analyze(rows: list[dict], samples=2000, seed=17) -> list[dict]:
     for (experiment, item), s in sorted(groups.items()):
         if set(s) != set(product(*DESIGNS[experiment][1])):
             raise ValueError(f"Incomplete or invalid factorial design for {item}")
-        if experiment == "garden_path":
+        if experiment == "np_s":
+            add("np_s", item,
+                s["ambiguous", "absent"] - s["ambiguous", "that"]
+                - s["control", "absent"] + s["control", "that"])
+        elif experiment == "garden_path":
             cost = lambda verb: s[verb, "absent"] - s[verb, "comma"]  # noqa: E731
             add("garden_path", item, cost("ambiguous") - cost("control"))
         elif experiment == "agreement":
