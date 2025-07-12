@@ -103,9 +103,11 @@ def generate_np_s() -> list[Stimulus]:
 
 
 def generate(experiment="all") -> list[Stimulus]:
-    if experiment not in {"all", "agreement", "polarity", "garden_path"}:
+    if experiment not in {"all", "agreement", "polarity", "garden_path", "np_s"}:
         raise ValueError(f"Unknown experiment: {experiment}")
     rows = []
+    if experiment in {"all", "np_s"}:
+        rows.extend(generate_np_s())
     if experiment in {"all", "garden_path"}:
         for i, (subject, ambig, control, noun, verb, tail) in enumerate(GARDEN_PATH):
             item = f"npz-{i:02d}"

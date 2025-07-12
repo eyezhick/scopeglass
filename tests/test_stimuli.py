@@ -7,7 +7,7 @@ from scopeglass.stimuli import generate
 
 def test_design_is_balanced_and_ids_unique():
     rows = generate()
-    assert len(rows) == len({r.id for r in rows}) == 240
+    assert len(rows) == len({r.id for r in rows}) == 288
     assert set(Counter(r.item for r in rows).values()) == {4, 8}
     for row in rows:
         assert row.target.startswith(" ")

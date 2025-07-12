@@ -7,8 +7,8 @@ from scopeglass.report import write_report
 def test_offline_run_and_report_round_trip(tmp_path):
     main(["run", "--out", str(tmp_path), "--bootstrap", "10"])
     result = json.loads((tmp_path / "results.json").read_text())
-    assert len(result["rows"]) == 240
-    assert len(result["summary"]) == 6
+    assert len(result["rows"]) == 288
+    assert len(result["summary"]) == 7
     assert not result["metadata"]["empirical"]
     main(["report", str(tmp_path / "results.json"), "--out", str(tmp_path / "again.html")])
     assert (tmp_path / "again.html").read_text() == (tmp_path / "report.html").read_text()

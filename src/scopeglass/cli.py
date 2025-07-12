@@ -12,12 +12,14 @@ from .report import write_report
 from .scorers import HuggingFaceScorer, ToyScorer
 from .stimuli import generate
 
+EXPERIMENTS = ["all", "garden_path", "np_s", "agreement", "polarity"]
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Inspect the grammar inside a language model")
     commands = parser.add_subparsers(dest="command", required=True)
     export = commands.add_parser("stimuli", help="Export the original factorial materials as JSONL")
-    export.add_argument("--experiment", choices=["all", "garden_path", "agreement", "polarity"],
+    export.add_argument("--experiment", choices=EXPERIMENTS,
                         default="all")
     run = commands.add_parser("run", help="Score materials and produce JSON plus an offline report")
     run.add_argument("--backend", choices=["toy", "hf"], default="toy")
@@ -25,7 +27,7 @@ def main(argv=None):
     run.add_argument("--revision", help="Hugging Face revision; resolved commit is recorded")
     run.add_argument("--device", default="cpu")
     run.add_argument("--threads", type=int, default=4)
-    run.add_argument("--experiment", choices=["all", "garden_path", "agreement", "polarity"],
+    run.add_argument("--experiment", choices=EXPERIMENTS,
                      default="all")
     run.add_argument("--bootstrap", type=int, default=2000)
     run.add_argument("--seed", type=int, default=17)

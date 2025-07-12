@@ -14,7 +14,7 @@ def toy_rows():
 
 def test_known_contrast_signs_and_values():
     results = {r["key"]: r for r in analyze(toy_rows(), samples=30)}
-    expected = {"garden_path": 2.5, "agreement_margin": 2.5, "attraction": 1.0,
+    expected = {"np_s": 2.5, "garden_path": 2.5, "agreement_margin": 2.5, "attraction": 1.0,
                 "matrix_licensing": 4.0, "embedded_licensing": 0.0, "scope_selectivity": 4.0}
     assert {k: r["estimate"] for k, r in results.items()} == expected
     assert all(r["n_items"] == 12 for r in results.values())
