@@ -1,5 +1,6 @@
 """Import, inspect, and select complete factorial stimulus sets."""
 
+from . import analysis
 from .stimuli import Stimulus
 
 
@@ -16,3 +17,12 @@ def validate_materials(rows: list[Stimulus]) -> None:
                 raise ValueError(f"Row {index}: {field} must be a string")
             if field != "spillover" and not value.strip():
                 raise ValueError(f"Row {index}: {field} must not be blank")
+        if row.experiment not in analysis.DESIGNS:
+            raise ValueError(f"Unknown experiment: {row.experiment}")
+        fields, levels = analysis.DESIGNS[row.experiment]
+        if not isinstance(row.factors, dict) or set(row.factors) != set(fields):
+            raise ValueError(f"Unexpected factors in {row.id}; expected {', '.join(fields)}")
+        for name, allowed in zip(fields, levels):
+            value = row.factors[name]
+            if not isinstance(value, str) or value not in allowed:
+                raise ValueError(f"Invalid level for {name} in {row.id}: {value!r}")

@@ -2,6 +2,7 @@ from dataclasses import replace
 
 import pytest
 
+from scopeglass import analysis
 from scopeglass.materials import validate_materials
 from scopeglass.stimuli import generate
 
@@ -38,3 +39,36 @@ def test_validation_preserves_unicode_spacing_and_empty_spillover():
     validate_materials(rows)
     assert rows[0].context == "The café owner"
     assert rows[0].target == "  smiled"
+
+
+@pytest.mark.parametrize("factors", [None, [], {}, {"extra": "value"}])
+def test_validation_rejects_wrong_factor_schema(factors):
+    rows = generate("garden_path")
+    rows[0] = replace(rows[0], factors=factors)
+    with pytest.raises(ValueError, match="Unexpected factors"):
+        validate_materials(rows)
+
+
+@pytest.mark.parametrize("level", [True, 1, [], "period"])
+def test_validation_rejects_unknown_or_nonstring_factor_levels(level):
+    rows = generate("garden_path")
+    rows[0] = replace(rows[0], factors={"ambiguity": "ambiguous", "boundary": level})
+    with pytest.raises(ValueError, match="Invalid level for boundary"):
+        validate_materials(rows)
+
+
+def test_validation_rejects_unknown_experiment():
+    rows = generate("garden_path")
+    rows[0] = replace(rows[0], experiment="unregistered")
+    with pytest.raises(ValueError, match="Unknown experiment"):
+        validate_materials(rows)
+
+
+def test_validation_uses_registered_designs(monkeypatch):
+    monkeypatch.setitem(analysis.DESIGNS, "custom", (("condition",), (("left", "right"),)))
+    base = generate("garden_path")[0]
+    rows = [
+        replace(base, id=f"custom-{level}", experiment="custom", factors={"condition": level})
+        for level in ("left", "right")
+    ]
+    validate_materials(rows)
