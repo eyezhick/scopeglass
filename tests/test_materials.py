@@ -72,3 +72,23 @@ def test_validation_uses_registered_designs(monkeypatch):
         for level in ("left", "right")
     ]
     validate_materials(rows)
+
+
+def test_validation_rejects_reused_stimulus_ids():
+    rows = generate("garden_path")
+    rows[1] = replace(rows[1], id=rows[0].id)
+    with pytest.raises(ValueError, match="Duplicate stimulus id"):
+        validate_materials(rows)
+
+
+def test_validation_rejects_duplicate_cells_with_distinct_ids():
+    rows = generate("garden_path")
+    rows.append(replace(rows[0], id="another-id"))
+    with pytest.raises(ValueError, match="Duplicate cell"):
+        validate_materials(rows)
+
+
+def test_validation_allows_repeated_surface_controls():
+    rows = generate("polarity")
+    assert len({(row.context, row.target, row.spillover) for row in rows}) < len(rows)
+    validate_materials(rows)

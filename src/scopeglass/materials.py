@@ -1,5 +1,7 @@
 """Import, inspect, and select complete factorial stimulus sets."""
 
+from collections import defaultdict
+
 from . import analysis
 from .stimuli import Stimulus
 
@@ -8,6 +10,8 @@ def validate_materials(rows: list[Stimulus]) -> None:
     """Reject malformed stimulus records without normalizing their text."""
     if not isinstance(rows, list) or not rows:
         raise ValueError("Materials must be a nonempty list of Stimulus records")
+    seen_ids = set()
+    cells = defaultdict(set)
     for index, row in enumerate(rows, start=1):
         if not isinstance(row, Stimulus):
             raise ValueError(f"Row {index} must be a Stimulus record")
@@ -26,3 +30,11 @@ def validate_materials(rows: list[Stimulus]) -> None:
             value = row.factors[name]
             if not isinstance(value, str) or value not in allowed:
                 raise ValueError(f"Invalid level for {name} in {row.id}: {value!r}")
+        if row.id in seen_ids:
+            raise ValueError(f"Duplicate stimulus id: {row.id}")
+        seen_ids.add(row.id)
+        cell = tuple(row.factors[name] for name in fields)
+        frame = cells[row.experiment, row.item]
+        if cell in frame:
+            raise ValueError(f"Duplicate cell in {row.experiment}/{row.item}: {cell}")
+        frame.add(cell)
