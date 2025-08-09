@@ -92,3 +92,23 @@ def test_validation_allows_repeated_surface_controls():
     rows = generate("polarity")
     assert len({(row.context, row.target, row.spillover) for row in rows}) < len(rows)
     validate_materials(rows)
+
+
+@pytest.mark.parametrize("experiment", ["garden_path", "agreement", "polarity"])
+def test_validation_rejects_missing_cells(experiment):
+    rows = generate(experiment)
+    with pytest.raises(ValueError, match="Incomplete factorial design.*missing"):
+        validate_materials(rows[1:])
+
+
+def test_frame_identity_includes_experiment():
+    rows = generate("garden_path")[:4] + generate("agreement")[:8]
+    rows = [replace(row, item="shared-name") for row in rows]
+    validate_materials(rows)
+
+
+def test_validation_does_not_reorder_materials():
+    rows = list(reversed(generate("garden_path")[:8]))
+    original_ids = [row.id for row in rows]
+    validate_materials(rows)
+    assert [row.id for row in rows] == original_ids

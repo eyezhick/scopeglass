@@ -1,13 +1,14 @@
 """Import, inspect, and select complete factorial stimulus sets."""
 
 from collections import defaultdict
+from itertools import product
 
 from . import analysis
 from .stimuli import Stimulus
 
 
 def validate_materials(rows: list[Stimulus]) -> None:
-    """Reject malformed stimulus records without normalizing their text."""
+    """Require unique records and complete frames without normalizing text."""
     if not isinstance(rows, list) or not rows:
         raise ValueError("Materials must be a nonempty list of Stimulus records")
     seen_ids = set()
@@ -38,3 +39,10 @@ def validate_materials(rows: list[Stimulus]) -> None:
         if cell in frame:
             raise ValueError(f"Duplicate cell in {row.experiment}/{row.item}: {cell}")
         frame.add(cell)
+    for (experiment, item), observed in cells.items():
+        expected = set(product(*analysis.DESIGNS[experiment][1]))
+        if observed != expected:
+            raise ValueError(
+                f"Incomplete factorial design for {experiment}/{item}: "
+                f"missing {sorted(expected - observed)}"
+            )
