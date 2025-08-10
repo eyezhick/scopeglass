@@ -1,7 +1,9 @@
 """Import, inspect, and select complete factorial stimulus sets."""
 
+import json
 from collections import defaultdict
 from itertools import product
+from pathlib import Path
 
 from . import analysis
 from .stimuli import Stimulus
@@ -46,3 +48,11 @@ def validate_materials(rows: list[Stimulus]) -> None:
                 f"Incomplete factorial design for {experiment}/{item}: "
                 f"missing {sorted(expected - observed)}"
             )
+
+
+def write_jsonl(rows: list[Stimulus], path: Path) -> None:
+    """Write validated UTF-8 records, with sorted keys and one record per line."""
+    validate_materials(rows)
+    content = "".join(json.dumps(row.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
+                      for row in rows)
+    Path(path).write_text(content, encoding="utf-8")

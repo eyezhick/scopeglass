@@ -1,9 +1,10 @@
+import json
 from dataclasses import replace
 
 import pytest
 
 from scopeglass import analysis
-from scopeglass.materials import validate_materials
+from scopeglass.materials import validate_materials, write_jsonl
 from scopeglass.stimuli import generate
 
 
@@ -112,3 +113,31 @@ def test_validation_does_not_reorder_materials():
     original_ids = [row.id for row in rows]
     validate_materials(rows)
     assert [row.id for row in rows] == original_ids
+
+
+def test_jsonl_export_preserves_all_fields_and_unicode(tmp_path):
+    rows = generate("garden_path")[:4]
+    rows[0] = replace(rows[0], context="The café owner", target="  smiled", spillover="")
+    path = tmp_path / "materials.jsonl"
+    write_jsonl(rows, path)
+    text = path.read_text(encoding="utf-8")
+    assert "café" in text
+    assert text.endswith("\n")
+    assert [json.loads(line) for line in text.splitlines()] == [row.to_dict() for row in rows]
+
+
+def test_jsonl_export_is_independent_of_factor_insertion_order(tmp_path):
+    rows = generate("garden_path")[:4]
+    reordered = [replace(row, factors=dict(reversed(list(row.factors.items())))) for row in rows]
+    first, second = tmp_path / "first.jsonl", tmp_path / "second.jsonl"
+    write_jsonl(rows, first)
+    write_jsonl(reordered, second)
+    assert first.read_bytes() == second.read_bytes()
+
+
+def test_jsonl_export_validates_before_overwriting(tmp_path):
+    path = tmp_path / "materials.jsonl"
+    path.write_text("existing materials", encoding="utf-8")
+    with pytest.raises(ValueError, match="Incomplete factorial design"):
+        write_jsonl(generate("garden_path")[:3], path)
+    assert path.read_text(encoding="utf-8") == "existing materials"
