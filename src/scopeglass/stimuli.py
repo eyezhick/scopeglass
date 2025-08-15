@@ -51,10 +51,39 @@ POLARITY = [
 ]
 
 
+# Subject, optionally transitive verb, intransitive control, main subject,
+# disambiguating main verb, spillover. NP/Z: noun-phrase object vs zero object.
+GARDEN_PATH = [
+    ("hunter", "hunted", "slept", "deer", "ran", " into the woods."),
+    ("chef", "cooked", "sneezed", "soup", "cooled", " on the counter."),
+    ("child", "ate", "laughed", "sandwich", "fell", " onto the floor."),
+    ("student", "read", "yawned", "book", "slipped", " off the table."),
+    ("woman", "painted", "danced", "wall", "crumbled", " in the heat."),
+    ("boy", "washed", "slept", "dog", "barked", " at the door."),
+    ("farmer", "milked", "coughed", "cow", "kicked", " the fence."),
+    ("officer", "searched", "waited", "room", "filled", " with smoke."),
+    ("driver", "parked", "hesitated", "truck", "rolled", " down the hill."),
+    ("artist", "sketched", "smiled", "model", "sneezed", " very loudly."),
+    ("sailor", "rowed", "rested", "boat", "drifted", " toward the shore."),
+    ("tailor", "sewed", "snored", "shirt", "tore", " at the seam."),
+]
+
+
 def generate(experiment="all") -> list[Stimulus]:
-    if experiment not in {"all", "agreement", "polarity"}:
+    if experiment not in {"all", "agreement", "polarity", "garden_path"}:
         raise ValueError(f"Unknown experiment: {experiment}")
     rows = []
+    if experiment in {"all", "garden_path"}:
+        for i, (subject, ambig, control, noun, verb, tail) in enumerate(GARDEN_PATH):
+            item = f"npz-{i:02d}"
+            for ambiguity, boundary in product(("ambiguous", "control"), ("absent", "comma")):
+                subordinate = ambig if ambiguity == "ambiguous" else control
+                comma = "," if boundary == "comma" else ""
+                context = f"While the {subject} {subordinate}{comma} the {noun}"
+                rows.append(Stimulus(
+                    f"{item}-{ambiguity}-{boundary}", item, "garden_path", context,
+                    f" {verb}", tail, {"ambiguity": ambiguity, "boundary": boundary},
+                ))
     if experiment in {"all", "agreement"}:
         for i, (sg, pl, prep, dsg, dpl, tail) in enumerate(AGREEMENT):
             item = f"agr-{i:02d}"
