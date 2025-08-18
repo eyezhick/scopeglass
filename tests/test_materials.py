@@ -4,7 +4,7 @@ from dataclasses import replace
 import pytest
 
 from scopeglass import analysis
-from scopeglass.materials import validate_materials, write_jsonl
+from scopeglass.materials import load_jsonl, validate_materials, write_jsonl
 from scopeglass.stimuli import generate
 
 
@@ -141,3 +141,43 @@ def test_jsonl_export_validates_before_overwriting(tmp_path):
     with pytest.raises(ValueError, match="Incomplete factorial design"):
         write_jsonl(generate("garden_path")[:3], path)
     assert path.read_text(encoding="utf-8") == "existing materials"
+
+
+def test_jsonl_round_trip_reconstructs_stimulus_records(tmp_path):
+    rows = generate()
+    path = tmp_path / "materials.jsonl"
+    write_jsonl(rows, path)
+    assert load_jsonl(path) == rows
+
+
+@pytest.mark.parametrize("record", [None, [], "sentence", {"id": "missing-fields"}])
+def test_jsonl_rejects_nonrecords_and_missing_fields(tmp_path, record):
+    path = tmp_path / "materials.jsonl"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    with pytest.raises(ValueError, match="Each record must contain exactly"):
+        load_jsonl(path)
+
+
+def test_jsonl_rejects_unexpected_fields(tmp_path):
+    record = generate()[0].to_dict() | {"surprisal_bits": 2.0}
+    path = tmp_path / "materials.jsonl"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    with pytest.raises(ValueError, match="Each record must contain exactly"):
+        load_jsonl(path)
+
+
+def test_jsonl_skips_blank_lines_but_rejects_empty_materials(tmp_path):
+    rows = generate("garden_path")[:4]
+    path = tmp_path / "materials.jsonl"
+    path.write_text("\n\n".join(json.dumps(row.to_dict()) for row in rows), encoding="utf-8")
+    assert load_jsonl(path) == rows
+    path.write_text("\n \n", encoding="utf-8")
+    with pytest.raises(ValueError, match="nonempty"):
+        load_jsonl(path)
+
+
+def test_jsonl_rejects_incomplete_imported_frames(tmp_path):
+    path = tmp_path / "materials.jsonl"
+    path.write_text(json.dumps(generate()[0].to_dict()), encoding="utf-8")
+    with pytest.raises(ValueError, match="Incomplete factorial design"):
+        load_jsonl(path)

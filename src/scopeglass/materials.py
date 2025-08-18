@@ -2,11 +2,14 @@
 
 import json
 from collections import defaultdict
+from dataclasses import fields
 from itertools import product
 from pathlib import Path
 
 from . import analysis
 from .stimuli import Stimulus
+
+_FIELDS = tuple(field.name for field in fields(Stimulus))
 
 
 def validate_materials(rows: list[Stimulus]) -> None:
@@ -56,3 +59,18 @@ def write_jsonl(rows: list[Stimulus], path: Path) -> None:
     content = "".join(json.dumps(row.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
                       for row in rows)
     Path(path).write_text(content, encoding="utf-8")
+
+
+def load_jsonl(path: Path) -> list[Stimulus]:
+    """Read full stimulus records and validate the complete imported design."""
+    rows = []
+    with Path(path).open(encoding="utf-8") as source:
+        for line in source:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if not isinstance(record, dict) or set(record) != set(_FIELDS):
+                raise ValueError(f"Each record must contain exactly: {', '.join(_FIELDS)}")
+            rows.append(Stimulus(**record))
+    validate_materials(rows)
+    return rows
