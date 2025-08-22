@@ -64,13 +64,19 @@ def write_jsonl(rows: list[Stimulus], path: Path) -> None:
 def load_jsonl(path: Path) -> list[Stimulus]:
     """Read full stimulus records and validate the complete imported design."""
     rows = []
-    with Path(path).open(encoding="utf-8") as source:
-        for line in source:
+    with Path(path).open(encoding="utf-8-sig") as source:
+        for line_number, line in enumerate(source, start=1):
             if not line.strip():
                 continue
-            record = json.loads(line)
-            if not isinstance(record, dict) or set(record) != set(_FIELDS):
-                raise ValueError(f"Each record must contain exactly: {', '.join(_FIELDS)}")
+            try:
+                record = json.loads(line)
+                if not isinstance(record, dict) or set(record) != set(_FIELDS):
+                    raise ValueError(f"Each record must contain exactly: {', '.join(_FIELDS)}")
+            except ValueError as error:
+                raise ValueError(f"{path}:{line_number}: {error}") from error
             rows.append(Stimulus(**record))
-    validate_materials(rows)
+    try:
+        validate_materials(rows)
+    except ValueError as error:
+        raise ValueError(f"{path}: {error}") from error
     return rows

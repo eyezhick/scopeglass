@@ -181,3 +181,27 @@ def test_jsonl_rejects_incomplete_imported_frames(tmp_path):
     path.write_text(json.dumps(generate()[0].to_dict()), encoding="utf-8")
     with pytest.raises(ValueError, match="Incomplete factorial design"):
         load_jsonl(path)
+
+
+@pytest.mark.parametrize("bad_line", ['{"broken":', '{"id": "only-one-field"}'])
+def test_jsonl_parse_errors_name_the_file_and_physical_line(tmp_path, bad_line):
+    path = tmp_path / "broken.jsonl"
+    path.write_text("\n\n" + bad_line, encoding="utf-8")
+    with pytest.raises(ValueError, match="broken.jsonl:3:"):
+        load_jsonl(path)
+
+
+def test_jsonl_design_errors_name_the_input_file(tmp_path):
+    rows = generate("garden_path")[:4]
+    rows[0] = replace(rows[0], target=None)
+    path = tmp_path / "wrong-type.jsonl"
+    path.write_text("\n".join(json.dumps(row.to_dict()) for row in rows), encoding="utf-8")
+    with pytest.raises(ValueError, match="wrong-type.jsonl: Row 1: target must be a string"):
+        load_jsonl(path)
+
+
+def test_jsonl_accepts_utf8_bom_from_text_editors(tmp_path):
+    rows = generate("garden_path")[:4]
+    path = tmp_path / "bom.jsonl"
+    path.write_text("\n".join(json.dumps(row.to_dict()) for row in rows), encoding="utf-8-sig")
+    assert load_jsonl(path) == rows
