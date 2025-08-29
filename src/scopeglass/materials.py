@@ -1,5 +1,6 @@
 """Import, inspect, and select complete factorial stimulus sets."""
 
+import csv
 import json
 from collections import defaultdict
 from dataclasses import fields
@@ -80,3 +81,15 @@ def load_jsonl(path: Path) -> list[Stimulus]:
     except ValueError as error:
         raise ValueError(f"{path}: {error}") from error
     return rows
+
+
+def write_csv(rows: list[Stimulus], path: Path) -> None:
+    """Write every stimulus field; factors occupy one sorted JSON column."""
+    validate_materials(rows)
+    with Path(path).open("w", encoding="utf-8", newline="") as output:
+        writer = csv.DictWriter(output, fieldnames=_FIELDS, lineterminator="\n")
+        writer.writeheader()
+        for row in rows:
+            record = row.to_dict()
+            record["factors"] = json.dumps(row.factors, ensure_ascii=False, sort_keys=True)
+            writer.writerow(record)

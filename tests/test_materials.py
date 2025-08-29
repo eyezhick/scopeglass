@@ -1,10 +1,11 @@
+import csv
 import json
 from dataclasses import replace
 
 import pytest
 
 from scopeglass import analysis
-from scopeglass.materials import load_jsonl, validate_materials, write_jsonl
+from scopeglass.materials import load_jsonl, validate_materials, write_csv, write_jsonl
 from scopeglass.stimuli import generate
 
 
@@ -205,3 +206,32 @@ def test_jsonl_accepts_utf8_bom_from_text_editors(tmp_path):
     path = tmp_path / "bom.jsonl"
     path.write_text("\n".join(json.dumps(row.to_dict()) for row in rows), encoding="utf-8-sig")
     assert load_jsonl(path) == rows
+
+
+def test_csv_export_quotes_text_and_preserves_full_records(tmp_path):
+    rows = generate("garden_path")[:4]
+    rows[0] = replace(rows[0], context='The café owner said, "hello"\nthen', spillover="")
+    path = tmp_path / "materials.csv"
+    write_csv(rows, path)
+    with path.open(encoding="utf-8", newline="") as source:
+        records = list(csv.DictReader(source))
+    for record in records:
+        record["factors"] = json.loads(record["factors"])
+    assert records == [row.to_dict() for row in rows]
+
+
+def test_csv_export_is_independent_of_factor_insertion_order(tmp_path):
+    rows = generate("garden_path")[:4]
+    reordered = [replace(row, factors=dict(reversed(list(row.factors.items())))) for row in rows]
+    first, second = tmp_path / "first.csv", tmp_path / "second.csv"
+    write_csv(rows, first)
+    write_csv(reordered, second)
+    assert first.read_bytes() == second.read_bytes()
+
+
+def test_csv_export_validates_before_overwriting(tmp_path):
+    path = tmp_path / "materials.csv"
+    path.write_text("existing materials", encoding="utf-8")
+    with pytest.raises(ValueError, match="Incomplete factorial design"):
+        write_csv(generate("garden_path")[:3], path)
+    assert path.read_text(encoding="utf-8") == "existing materials"
