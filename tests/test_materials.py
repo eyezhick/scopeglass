@@ -5,7 +5,7 @@ from dataclasses import replace
 import pytest
 
 from scopeglass import analysis
-from scopeglass.materials import load_jsonl, validate_materials, write_csv, write_jsonl
+from scopeglass.materials import load_jsonl, select_items, validate_materials, write_csv, write_jsonl
 from scopeglass.stimuli import generate
 
 
@@ -235,3 +235,40 @@ def test_csv_export_validates_before_overwriting(tmp_path):
     with pytest.raises(ValueError, match="Incomplete factorial design"):
         write_csv(generate("garden_path")[:3], path)
     assert path.read_text(encoding="utf-8") == "existing materials"
+
+
+def test_item_selection_preserves_source_order_and_all_cells():
+    rows = generate("garden_path")
+    selected = select_items(rows, ["npz-03", "npz-01"])
+    assert selected == rows[4:8] + rows[12:16]
+    validate_materials(selected)
+    assert len(rows) == 48
+
+
+def test_default_selection_returns_a_new_list():
+    rows = generate("garden_path")[:4]
+    selected = select_items(rows)
+    assert selected == rows
+    assert selected is not rows
+
+
+@pytest.mark.parametrize("items", [[], "npz-00", [None], [3], [" "]])
+def test_item_selection_rejects_malformed_requests(items):
+    with pytest.raises(ValueError, match="nonempty list of item ids"):
+        select_items(generate("garden_path"), items)
+
+
+def test_item_selection_names_unknown_ids():
+    with pytest.raises(ValueError, match="Unknown item ids: a-missing, z-missing"):
+        select_items(generate(), ["z-missing", "npz-00", "a-missing"])
+
+
+def test_item_selection_does_not_duplicate_frames():
+    rows = generate("garden_path")
+    assert select_items(rows, ["npz-00", "npz-00"]) == rows[:4]
+
+
+def test_item_selection_includes_same_named_items_from_each_experiment():
+    rows = generate("garden_path")[:4] + generate("agreement")[:8]
+    rows = [replace(row, item="shared") for row in rows]
+    assert select_items(rows, ["shared"]) == rows

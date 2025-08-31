@@ -93,3 +93,21 @@ def write_csv(rows: list[Stimulus], path: Path) -> None:
             record = row.to_dict()
             record["factors"] = json.dumps(row.factors, ensure_ascii=False, sort_keys=True)
             writer.writerow(record)
+
+
+def select_items(rows: list[Stimulus], items: list[str] | None = None) -> list[Stimulus]:
+    """Select complete items in source order, rejecting misspelled item ids."""
+    validate_materials(rows)
+    available = {row.item for row in rows}
+    if items is None:
+        wanted = available
+    else:
+        if not isinstance(items, list) or not items or any(
+            not isinstance(item, str) or not item.strip() for item in items
+        ):
+            raise ValueError("Items must be a nonempty list of item ids")
+        wanted = set(items)
+        unknown = wanted - available
+        if unknown:
+            raise ValueError(f"Unknown item ids: {', '.join(sorted(unknown))}")
+    return [row for row in rows if row.item in wanted]
