@@ -95,9 +95,15 @@ def write_csv(rows: list[Stimulus], path: Path) -> None:
             writer.writerow(record)
 
 
-def select_items(rows: list[Stimulus], items: list[str] | None = None) -> list[Stimulus]:
-    """Select complete items in source order, rejecting misspelled item ids."""
+def select_items(
+    rows: list[Stimulus], items: list[str] | None = None, limit: int | None = None,
+) -> list[Stimulus]:
+    """Select complete frames in source order; limit counts (experiment, item) pairs."""
     validate_materials(rows)
+    if limit is not None and (
+        isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
+    ):
+        raise ValueError("Item limit must be a positive integer")
     available = {row.item for row in rows}
     if items is None:
         wanted = available
@@ -110,4 +116,9 @@ def select_items(rows: list[Stimulus], items: list[str] | None = None) -> list[S
         unknown = wanted - available
         if unknown:
             raise ValueError(f"Unknown item ids: {', '.join(sorted(unknown))}")
-    return [row for row in rows if row.item in wanted]
+    selected = [row for row in rows if row.item in wanted]
+    if limit is not None:
+        frames = list(dict.fromkeys((row.experiment, row.item) for row in selected))
+        retained = set(frames[:limit])
+        selected = [row for row in selected if (row.experiment, row.item) in retained]
+    return selected

@@ -272,3 +272,33 @@ def test_item_selection_includes_same_named_items_from_each_experiment():
     rows = generate("garden_path")[:4] + generate("agreement")[:8]
     rows = [replace(row, item="shared") for row in rows]
     assert select_items(rows, ["shared"]) == rows
+
+
+@pytest.mark.parametrize("limit", [0, -1, True, False, 1.0, "1"])
+def test_item_limits_require_positive_integers(limit):
+    with pytest.raises(ValueError, match="positive integer"):
+        select_items(generate(), limit=limit)
+
+
+def test_item_limit_keeps_complete_interleaved_frames():
+    rows = generate("garden_path")[:8]
+    interleaved = [row for pair in zip(rows[:4], rows[4:]) for row in pair]
+    assert select_items(interleaved, limit=1) == rows[:4]
+
+
+def test_item_limit_applies_after_explicit_selection():
+    rows = generate("garden_path")
+    assert select_items(rows, ["npz-02", "npz-01"], limit=1) == rows[4:8]
+
+
+def test_item_limit_counts_frames_from_different_experiments():
+    rows = generate("garden_path")[:4] + generate("agreement")[:8]
+    rows = [replace(row, item="shared") for row in rows]
+    assert select_items(rows, limit=1) == rows[:4]
+    assert select_items(rows, limit=2) == rows
+    assert select_items(rows, limit=100) == rows
+
+
+def test_limit_does_not_hide_unknown_requested_items():
+    with pytest.raises(ValueError, match="Unknown item ids"):
+        select_items(generate(), ["npz-00", "does-not-exist"], limit=1)
