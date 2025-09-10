@@ -1,6 +1,7 @@
 """Import, inspect, and select complete factorial stimulus sets."""
 
 import csv
+import hashlib
 import json
 from collections import defaultdict
 from dataclasses import fields
@@ -122,3 +123,10 @@ def select_items(
         retained = set(frames[:limit])
         selected = [row for row in selected if (row.experiment, row.item) in retained]
     return selected
+
+
+def material_hash(rows: list[Stimulus]) -> str:
+    """Hash validated records using the same serialization as run metadata."""
+    validate_materials(rows)
+    content = json.dumps([row.to_dict() for row in rows], sort_keys=True).encode()
+    return hashlib.sha256(content).hexdigest()

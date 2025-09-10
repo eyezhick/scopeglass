@@ -1,12 +1,20 @@
 import csv
 import json
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
 from scopeglass import analysis
-from scopeglass.materials import load_jsonl, select_items, validate_materials, write_csv, write_jsonl
-from scopeglass.stimuli import generate
+from scopeglass.materials import (
+    load_jsonl,
+    material_hash,
+    select_items,
+    validate_materials,
+    write_csv,
+    write_jsonl,
+)
+from scopeglass.stimuli import Stimulus, generate
 
 
 def test_builtin_materials_pass_validation():
@@ -302,3 +310,29 @@ def test_item_limit_counts_frames_from_different_experiments():
 def test_limit_does_not_hide_unknown_requested_items():
     with pytest.raises(ValueError, match="Unknown item ids"):
         select_items(generate(), ["npz-00", "does-not-exist"], limit=1)
+
+
+def test_material_hash_matches_archived_run_metadata():
+    path = Path(__file__).parents[1] / "examples" / "distilgpt2" / "results.json"
+    run = json.loads(path.read_text(encoding="utf-8"))
+    rows = [Stimulus(**{key: row[key] for key in Stimulus.__dataclass_fields__})
+            for row in run["rows"]]
+    assert material_hash(rows) == run["metadata"]["stimuli_sha256"]
+
+
+def test_material_hash_tracks_text_and_presentation_order():
+    rows = generate("garden_path")[:4]
+    changed = [replace(rows[0], target=rows[0].target + " away"), *rows[1:]]
+    assert material_hash(rows) != material_hash(changed)
+    assert material_hash(rows) != material_hash(list(reversed(rows)))
+
+
+def test_material_hash_ignores_factor_key_order():
+    rows = generate("garden_path")[:4]
+    reordered = [replace(row, factors=dict(reversed(list(row.factors.items())))) for row in rows]
+    assert material_hash(rows) == material_hash(reordered)
+
+
+def test_invalid_materials_cannot_receive_a_validity_hash():
+    with pytest.raises(ValueError, match="Incomplete factorial design"):
+        material_hash(generate("garden_path")[:3])
