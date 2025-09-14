@@ -7,6 +7,7 @@ import pytest
 
 from scopeglass import analysis
 from scopeglass.materials import (
+    describe_materials,
     load_jsonl,
     material_hash,
     select_items,
@@ -336,3 +337,39 @@ def test_material_hash_ignores_factor_key_order():
 def test_invalid_materials_cannot_receive_a_validity_hash():
     with pytest.raises(ValueError, match="Incomplete factorial design"):
         material_hash(generate("garden_path")[:3])
+
+
+def test_description_reports_balanced_counts_and_factor_levels():
+    rows = generate("garden_path")[:8] + generate("agreement")[:8]
+    description = describe_materials(rows)
+    assert description["n_stimuli"] == 16
+    assert description["n_items"] == 3
+    assert list(description["experiments"]) == ["garden_path", "agreement"]
+    assert description["experiments"]["garden_path"] == {
+        "n_stimuli": 8,
+        "n_items": 2,
+        "factors": {"ambiguity": ["ambiguous", "control"], "boundary": ["absent", "comma"]},
+    }
+    assert description["experiments"]["agreement"]["n_items"] == 1
+    assert description["material_hash"] == material_hash(rows)
+    assert json.loads(json.dumps(description)) == description
+
+
+def test_description_counts_same_named_frames_separately():
+    rows = generate("garden_path")[:4] + generate("agreement")[:8]
+    rows = [replace(row, item="shared") for row in rows]
+    assert describe_materials(rows)["n_items"] == 2
+
+
+def test_description_does_not_expose_mutable_design_levels():
+    rows = generate("garden_path")[:4]
+    description = describe_materials(rows)
+    description["experiments"]["garden_path"]["factors"]["boundary"].append("period")
+    assert "period" not in describe_materials(rows)["experiments"]["garden_path"]["factors"][
+        "boundary"
+    ]
+
+
+def test_description_rejects_invalid_materials():
+    with pytest.raises(ValueError, match="nonempty"):
+        describe_materials([])

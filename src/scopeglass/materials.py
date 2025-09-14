@@ -130,3 +130,25 @@ def material_hash(rows: list[Stimulus]) -> str:
     validate_materials(rows)
     content = json.dumps([row.to_dict() for row in rows], sort_keys=True).encode()
     return hashlib.sha256(content).hexdigest()
+
+
+def describe_materials(rows: list[Stimulus]) -> dict:
+    """Summarize validated row counts, frame counts, and registered factor levels."""
+    fingerprint = material_hash(rows)
+    groups = defaultdict(list)
+    for row in rows:
+        groups[row.experiment].append(row)
+    experiments = {}
+    for experiment, records in groups.items():
+        names, levels = analysis.DESIGNS[experiment]
+        experiments[experiment] = {
+            "n_stimuli": len(records),
+            "n_items": len({row.item for row in records}),
+            "factors": {name: list(allowed) for name, allowed in zip(names, levels)},
+        }
+    return {
+        "n_stimuli": len(rows),
+        "n_items": sum(group["n_items"] for group in experiments.values()),
+        "experiments": experiments,
+        "material_hash": fingerprint,
+    }
