@@ -14,6 +14,15 @@ from .stimuli import Stimulus
 _FIELDS = tuple(field.name for field in fields(Stimulus))
 
 
+def _unique_object(pairs: list[tuple[str, object]]) -> dict:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def validate_materials(rows: list[Stimulus]) -> None:
     """Require unique records and complete frames without normalizing text."""
     if not isinstance(rows, list) or not rows:
@@ -71,7 +80,7 @@ def load_jsonl(path: Path) -> list[Stimulus]:
             if not line.strip():
                 continue
             try:
-                record = json.loads(line)
+                record = json.loads(line, object_pairs_hook=_unique_object)
                 if not isinstance(record, dict) or set(record) != set(_FIELDS):
                     raise ValueError(f"Each record must contain exactly: {', '.join(_FIELDS)}")
             except ValueError as error:

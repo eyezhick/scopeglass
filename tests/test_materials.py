@@ -373,3 +373,17 @@ def test_description_does_not_expose_mutable_design_levels():
 def test_description_rejects_invalid_materials():
     with pytest.raises(ValueError, match="nonempty"):
         describe_materials([])
+
+
+@pytest.mark.parametrize("key,replacement", [
+    ("id", '"id": "overwritten", "id":'),
+    ("boundary", '"boundary": "comma", "boundary":'),
+])
+def test_jsonl_rejects_silently_overwritten_record_and_factor_keys(tmp_path, key, replacement):
+    rows = generate("garden_path")[:4]
+    lines = [json.dumps(row.to_dict()) for row in rows]
+    lines[0] = lines[0].replace(f'"{key}":', replacement, 1)
+    path = tmp_path / "duplicate.jsonl"
+    path.write_text("\n".join(lines), encoding="utf-8")
+    with pytest.raises(ValueError, match=f"duplicate.jsonl:1: Duplicate JSON key: {key}"):
+        load_jsonl(path)
