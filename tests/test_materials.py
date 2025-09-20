@@ -8,6 +8,7 @@ import pytest
 from scopeglass import analysis
 from scopeglass.materials import (
     describe_materials,
+    load_csv,
     load_jsonl,
     material_hash,
     select_items,
@@ -387,3 +388,75 @@ def test_jsonl_rejects_silently_overwritten_record_and_factor_keys(tmp_path, key
     path.write_text("\n".join(lines), encoding="utf-8")
     with pytest.raises(ValueError, match=f"duplicate.jsonl:1: Duplicate JSON key: {key}"):
         load_jsonl(path)
+
+
+def test_csv_round_trip_preserves_unicode_multiline_text_and_empty_spillover(tmp_path):
+    rows = generate()
+    rows[0] = replace(rows[0], context='The café owner said, "hello"\nthen', spillover="")
+    path = tmp_path / "materials.csv"
+    write_csv(rows, path)
+    assert load_csv(path) == rows
+
+
+@pytest.mark.parametrize("header", [
+    "",
+    "id,item,experiment,context,target,spillover",
+    "id,id,experiment,context,target,spillover,factors",
+    "id,item,experiment,context,target,spillover,factors,score",
+])
+def test_csv_rejects_missing_duplicate_or_extra_headers(tmp_path, header):
+    path = tmp_path / "bad-header.csv"
+    path.write_text(header + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="CSV header must contain exactly"):
+        load_csv(path)
+
+
+@pytest.mark.parametrize("record", ["a,b", "a,b,c,d,e,f,g,h"])
+def test_csv_rejects_wrong_column_counts_with_line_numbers(tmp_path, record):
+    path = tmp_path / "bad-row.csv"
+    path.write_text(
+        "id,item,experiment,context,target,spillover,factors\n" + record, encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="bad-row.csv:2: CSV row"):
+        load_csv(path)
+
+
+def test_csv_rejects_duplicated_factor_keys(tmp_path):
+    path = tmp_path / "duplicate.csv"
+    record = generate()[0].to_dict()
+    record["factors"] = '{"boundary":"absent","boundary":"comma","ambiguity":"ambiguous"}'
+    with path.open("w", encoding="utf-8", newline="") as output:
+        writer = csv.DictWriter(output, fieldnames=record)
+        writer.writeheader()
+        writer.writerow(record)
+    with pytest.raises(ValueError, match="duplicate.csv:2: Duplicate JSON key: boundary"):
+        load_csv(path)
+
+
+def test_csv_accepts_reordered_headers_and_utf8_bom(tmp_path):
+    rows = generate("garden_path")[:4]
+    path = tmp_path / "reordered.csv"
+    with path.open("w", encoding="utf-8-sig", newline="") as output:
+        writer = csv.DictWriter(output, fieldnames=list(reversed(rows[0].to_dict())))
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row.to_dict() | {"factors": json.dumps(row.factors)})
+    assert load_csv(path) == rows
+
+
+def test_csv_rejects_unclosed_quoted_fields(tmp_path):
+    path = tmp_path / "unclosed.csv"
+    path.write_text(
+        'id,item,experiment,context,target,spillover,factors\n"unclosed', encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="unclosed.csv:.*unexpected end of data"):
+        load_csv(path)
+
+
+def test_csv_validates_complete_frames_after_import(tmp_path):
+    path = tmp_path / "incomplete.csv"
+    write_csv(generate("garden_path")[:4], path)
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(lines[:-1]), encoding="utf-8")
+    with pytest.raises(ValueError, match="incomplete.csv: Incomplete factorial design"):
+        load_csv(path)

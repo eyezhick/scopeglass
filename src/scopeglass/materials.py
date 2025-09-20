@@ -105,6 +105,29 @@ def write_csv(rows: list[Stimulus], path: Path) -> None:
             writer.writerow(record)
 
 
+def load_csv(path: Path) -> list[Stimulus]:
+    """Read the full-field CSV format, decoding factors from their JSON column."""
+    rows = []
+    with Path(path).open(encoding="utf-8-sig", newline="") as source:
+        reader = csv.DictReader(source, strict=True)
+        try:
+            header = reader.fieldnames
+            if header is None or len(header) != len(_FIELDS) or set(header) != set(_FIELDS):
+                raise ValueError(f"CSV header must contain exactly: {', '.join(_FIELDS)}")
+            for record in reader:
+                if set(record) != set(_FIELDS) or any(value is None for value in record.values()):
+                    raise ValueError("CSV row must contain exactly one value per column")
+                record["factors"] = json.loads(record["factors"], object_pairs_hook=_unique_object)
+                rows.append(Stimulus(**record))
+        except (ValueError, csv.Error) as error:
+            raise ValueError(f"{path}:{reader.line_num}: {error}") from error
+    try:
+        validate_materials(rows)
+    except ValueError as error:
+        raise ValueError(f"{path}: {error}") from error
+    return rows
+
+
 def select_items(
     rows: list[Stimulus], items: list[str] | None = None, limit: int | None = None,
 ) -> list[Stimulus]:
