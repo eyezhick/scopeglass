@@ -17,3 +17,16 @@ def validate_run(run: dict) -> None:
         raise ValueError("Run metadata.empirical must be a boolean")
     if not isinstance(run.get("rows"), list) or not run["rows"]:
         raise ValueError("Run rows must be a nonempty list")
+    for index, row in enumerate(run["rows"]):
+        if not isinstance(row, dict):
+            raise ValueError(f"Row {index} must be an object")
+        for field in ("id", "item", "experiment", "context", "target", "spillover"):
+            if not isinstance(row.get(field), str):
+                raise ValueError(f"Row {index}.{field} must be a string")
+            if field != "spillover" and not row[field].strip():
+                raise ValueError(f"Row {index}.{field} must not be empty")
+        factors = row.get("factors")
+        if not isinstance(factors, dict) or not factors:
+            raise ValueError(f"Row {index}.factors must be a nonempty object")
+        if not all(isinstance(k, str) and isinstance(v, str) for k, v in factors.items()):
+            raise ValueError(f"Row {index}.factors must map strings to strings")

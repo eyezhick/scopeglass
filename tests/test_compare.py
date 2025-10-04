@@ -34,3 +34,20 @@ def test_rejects_invalid_metadata(field, value):
     run["metadata"][field] = value
     with pytest.raises(ValueError, match=f"metadata.{field}"):
         validate_run(run)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("id", ""), ("item", 7), ("context", "  "), ("target", None),
+    ("spillover", 1), ("factors", []), ("factors", {"boundary": 1}),
+])
+def test_validates_stimulus_fields(field, value):
+    run = saved_run()
+    run["rows"][0][field] = value
+    with pytest.raises(ValueError, match=field):
+        validate_run(run)
+
+
+def test_empty_spillover_is_valid():
+    run = saved_run()
+    run["rows"][0]["spillover"] = ""
+    validate_run(run)
