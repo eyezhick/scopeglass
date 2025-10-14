@@ -51,3 +51,35 @@ def test_empty_spillover_is_valid():
     run = saved_run()
     run["rows"][0]["spillover"] = ""
     validate_run(run)
+
+
+@pytest.mark.parametrize("value", [True, "4", None, -1, float("nan"), float("inf")])
+def test_surprisal_requires_finite_nonnegative_number(value):
+    run = saved_run()
+    run["rows"][0]["surprisal_bits"] = value
+    with pytest.raises(ValueError, match="surprisal"):
+        validate_run(run)
+
+
+@pytest.mark.parametrize("tokens", [[], [None], [{"text": " x", "bits": True}],
+                                     [{"text": " x", "bits": 7, "id": -1}]])
+def test_invalid_target_tokens(tokens):
+    run = saved_run()
+    run["rows"][0]["tokens"] = tokens
+    with pytest.raises(ValueError, match="tokens"):
+        validate_run(run)
+
+
+def test_token_bits_must_agree_with_region_total():
+    run = saved_run()
+    run["rows"][0]["tokens"][0]["bits"] += 0.1
+    with pytest.raises(ValueError, match="sum"):
+        validate_run(run)
+
+
+def test_split_tokens_can_reconstruct_region_total():
+    run = saved_run()
+    row = run["rows"][0]
+    row["tokens"] = [{"text": " r", "bits": 2, "id": 1},
+                     {"text": "an", "bits": row["surprisal_bits"] - 2, "id": 2}]
+    validate_run(run)
