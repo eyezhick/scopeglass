@@ -2,6 +2,8 @@
 
 import math
 
+from .analysis import analyze
+
 
 def _surprisal(value, field):
     if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
@@ -50,3 +52,5 @@ def validate_run(run: dict) -> None:
         if not math.isclose(sum(t["bits"] for t in tokens), row["surprisal_bits"],
                             rel_tol=1e-9, abs_tol=1e-9):
             raise ValueError(f"Row {index}.tokens bits must sum to surprisal_bits")
+    # Reuse the registered designs and contrast validation, never a cached summary.
+    analyze(run["rows"], samples=1)

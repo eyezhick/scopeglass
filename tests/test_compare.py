@@ -83,3 +83,32 @@ def test_split_tokens_can_reconstruct_region_total():
     row["tokens"] = [{"text": " r", "bits": 2, "id": 1},
                      {"text": "an", "bits": row["surprisal_bits"] - 2, "id": 2}]
     validate_run(run)
+
+
+@pytest.mark.parametrize("problem", ["missing_cell", "duplicate_id", "duplicate_cell",
+                                     "unknown_experiment", "unknown_factor", "unknown_level"])
+def test_saved_runs_require_complete_registered_designs(problem):
+    run = saved_run()
+    row = run["rows"][0]
+    if problem == "missing_cell":
+        run["rows"].pop()
+    elif problem == "duplicate_id":
+        run["rows"].append(deepcopy(row))
+    elif problem == "duplicate_cell":
+        duplicate = deepcopy(row)
+        duplicate["id"] += "-copy"
+        run["rows"].append(duplicate)
+    elif problem == "unknown_experiment":
+        row["experiment"] = "unknown"
+    elif problem == "unknown_factor":
+        row["factors"]["unexpected"] = "value"
+    else:
+        row["factors"]["boundary"] = "unknown"
+    with pytest.raises(ValueError):
+        validate_run(run)
+
+
+def test_cached_summary_is_not_trusted():
+    run = saved_run()
+    run["summary"] = {"corrupt": "ignored"}
+    validate_run(run)
