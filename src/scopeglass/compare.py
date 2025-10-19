@@ -1,6 +1,7 @@
 """Compare saved scores on identical lexical frames."""
 
 import math
+from statistics import mean
 
 from .analysis import analyze
 
@@ -54,3 +55,36 @@ def validate_run(run: dict) -> None:
             raise ValueError(f"Row {index}.tokens bits must sum to surprisal_bits")
     # Reuse the registered designs and contrast validation, never a cached summary.
     analyze(run["rows"], samples=1)
+
+
+MATERIAL_FIELDS = ("id", "item", "experiment", "context", "target", "spillover", "factors")
+
+
+def _materials(run):
+    return {row["id"]: {field: row[field] for field in MATERIAL_FIELDS} for row in run["rows"]}
+
+
+def compare_runs(left: dict, right: dict, samples=2000, seed=17) -> dict:
+    """Recompute contrasts and subtract LEFT from RIGHT on identical materials."""
+    validate_run(left)
+    validate_run(right)
+    if left["metadata"]["empirical"] != right["metadata"]["empirical"]:
+        raise ValueError("Cannot compare toy and empirical runs")
+    if _materials(left) != _materials(right):
+        raise ValueError("Runs must contain identical materials and complete item sets")
+    left_results = {result["key"]: result for result in analyze(left["rows"], samples=1)}
+    summary = []
+    for result in analyze(right["rows"], samples=1):
+        baseline = left_results[result["key"]]
+        left_items = {item["item"]: item["value"] for item in baseline["items"]}
+        items = [{"item": item["item"], "left": left_items[item["item"]],
+                  "right": item["value"], "delta": item["value"] - left_items[item["item"]]}
+                 for item in result["items"]]
+        summary.append({
+            "key": result["key"], "title": result["title"],
+            "left_estimate": baseline["estimate"], "right_estimate": result["estimate"],
+            "estimate": mean(item["delta"] for item in items),
+            "n_items": len(items), "items": items,
+        })
+    return {"schema_version": 1, "kind": "paired_comparison",
+            "direction": "right_minus_left", "summary": summary}

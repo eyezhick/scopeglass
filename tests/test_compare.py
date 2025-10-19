@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from scopeglass.compare import validate_run
+from scopeglass.compare import compare_runs, validate_run
 from scopeglass.scorers import ToyScorer
 from scopeglass.stimuli import generate
 
@@ -112,3 +112,36 @@ def test_cached_summary_is_not_trusted():
     run = saved_run()
     run["summary"] = {"corrupt": "ignored"}
     validate_run(run)
+
+
+@pytest.mark.parametrize("field", ["id", "item", "context", "target", "spillover"])
+def test_comparison_rejects_changed_materials(field):
+    left = saved_run()
+    right = deepcopy(left)
+    if field == "item":
+        for row in right["rows"]:
+            row[field] += "-renamed"
+    else:
+        right["rows"][0][field] += " changed"
+    with pytest.raises(ValueError, match="identical materials"):
+        compare_runs(left, right)
+
+
+def test_comparison_matches_reordered_rows_and_recomputes_summaries():
+    left = saved_run()
+    right = deepcopy(left)
+    right["rows"].reverse()
+    right["summary"] = [{"estimate": 999}]
+    result = compare_runs(left, right)["summary"][0]
+    assert result["estimate"] == 0
+    assert result["left_estimate"] == result["right_estimate"] == 2.5
+    assert all(item["delta"] == 0 for item in result["items"])
+
+
+def test_comparison_rejects_incomplete_item_overlap():
+    left = saved_run()
+    right = deepcopy(left)
+    removed = right["rows"][0]["item"]
+    right["rows"] = [row for row in right["rows"] if row["item"] != removed]
+    with pytest.raises(ValueError, match="identical materials"):
+        compare_runs(left, right)
