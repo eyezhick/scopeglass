@@ -3,7 +3,7 @@
 import math
 from statistics import mean
 
-from .analysis import analyze
+from .analysis import analyze, bootstrap
 
 
 def _surprisal(value, field):
@@ -84,7 +84,9 @@ def compare_runs(left: dict, right: dict, samples=2000, seed=17) -> dict:
             "key": result["key"], "title": result["title"],
             "left_estimate": baseline["estimate"], "right_estimate": result["estimate"],
             "estimate": mean(item["delta"] for item in items),
+            "ci95": bootstrap([item["delta"] for item in items], samples=samples, seed=seed),
             "n_items": len(items), "items": items,
         })
     return {"schema_version": 1, "kind": "paired_comparison",
-            "direction": "right_minus_left", "summary": summary}
+            "direction": "right_minus_left", "analysis": {"samples": samples, "seed": seed},
+            "summary": summary}

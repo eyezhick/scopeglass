@@ -2,6 +2,7 @@ from copy import deepcopy
 
 import pytest
 
+from scopeglass.analysis import bootstrap
 from scopeglass.compare import compare_runs, validate_run
 from scopeglass.scorers import ToyScorer
 from scopeglass.stimuli import generate
@@ -145,3 +146,34 @@ def test_comparison_rejects_incomplete_item_overlap():
     right["rows"] = [row for row in right["rows"] if row["item"] != removed]
     with pytest.raises(ValueError, match="identical materials"):
         compare_runs(left, right)
+
+
+def shift_ambiguous_cost(run, deltas):
+    for row in run["rows"]:
+        if row["factors"] == {"ambiguity": "ambiguous", "boundary": "absent"}:
+            delta = deltas[row["item"]]
+            row["surprisal_bits"] += delta
+            row["tokens"][0]["bits"] += delta
+
+
+def test_constant_paired_shift_collapses_interval_despite_baseline_variation():
+    left = saved_run()
+    items = sorted({row["item"] for row in left["rows"]})
+    shift_ambiguous_cost(left, dict(zip(items, range(len(items)), strict=True)))
+    right = deepcopy(left)
+    shift_ambiguous_cost(right, dict.fromkeys(items, 3))
+    result = compare_runs(left, right, samples=100)["summary"][0]
+    assert result["estimate"] == 3
+    assert result["ci95"] == [3, 3]
+
+
+def test_interval_resamples_matched_item_deltas():
+    left = saved_run()
+    right = deepcopy(left)
+    items = sorted({row["item"] for row in left["rows"]})
+    shifts = dict(zip(items, range(len(items)), strict=True))
+    shift_ambiguous_cost(right, shifts)
+    result = compare_runs(left, right, samples=100, seed=4)["summary"][0]
+    assert result["ci95"] == bootstrap(list(shifts.values()), samples=100, seed=4)
+    assert result["estimate"] == sum(shifts.values()) / len(items)
+    assert [item["delta"] for item in result["items"]] == list(shifts.values())
