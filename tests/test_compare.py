@@ -177,3 +177,25 @@ def test_interval_resamples_matched_item_deltas():
     assert result["ci95"] == bootstrap(list(shifts.values()), samples=100, seed=4)
     assert result["estimate"] == sum(shifts.values()) / len(items)
     assert [item["delta"] for item in result["items"]] == list(shifts.values())
+
+
+@pytest.mark.parametrize("samples", [True, False, 0, -1, 2.5, "20", None])
+def test_comparison_requires_positive_integer_samples(samples):
+    with pytest.raises(ValueError, match="samples"):
+        compare_runs(saved_run(), saved_run(), samples=samples)
+
+
+@pytest.mark.parametrize("seed", [True, 0.5, "17", None])
+def test_comparison_requires_integer_seed(seed):
+    with pytest.raises(ValueError, match="seed"):
+        compare_runs(saved_run(), saved_run(), seed=seed)
+
+
+def test_comparison_is_repeatable_and_records_resampling_settings():
+    left = saved_run()
+    right = deepcopy(left)
+    items = sorted({row["item"] for row in left["rows"]})
+    shift_ambiguous_cost(right, dict(zip(items, range(len(items)), strict=True)))
+    result = compare_runs(left, right, samples=31, seed=-5)
+    assert result == compare_runs(left, right, samples=31, seed=-5)
+    assert result["analysis"] == {"samples": 31, "seed": -5}

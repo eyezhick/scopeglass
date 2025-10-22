@@ -66,6 +66,10 @@ def _materials(run):
 
 def compare_runs(left: dict, right: dict, samples=2000, seed=17) -> dict:
     """Recompute contrasts and subtract LEFT from RIGHT on identical materials."""
+    if type(samples) is not int or samples < 1:
+        raise ValueError("samples must be a positive integer")
+    if type(seed) is not int:
+        raise ValueError("seed must be an integer")
     validate_run(left)
     validate_run(right)
     if left["metadata"]["empirical"] != right["metadata"]["empirical"]:
