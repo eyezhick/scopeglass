@@ -199,3 +199,23 @@ def test_comparison_is_repeatable_and_records_resampling_settings():
     result = compare_runs(left, right, samples=31, seed=-5)
     assert result == compare_runs(left, right, samples=31, seed=-5)
     assert result["analysis"] == {"samples": 31, "seed": -5}
+
+
+def test_comparison_preserves_each_sources_complete_metadata():
+    left = saved_run()
+    right = deepcopy(left)
+    left["metadata"].update(revision="left-revision", notes={"environment": ["cpu"]})
+    right["metadata"].update(revision="right-revision", created_utc="2026-01-01T00:00:00Z")
+    result = compare_runs(left, right, samples=5)
+    assert result["metadata"] == {"left": left["metadata"], "right": right["metadata"]}
+    result["metadata"]["left"]["notes"]["environment"].append("changed")
+    assert left["metadata"]["notes"]["environment"] == ["cpu"]
+
+
+def test_materials_are_checked_directly_even_when_recorded_hashes_match():
+    left = saved_run()
+    right = deepcopy(left)
+    left["metadata"]["stimuli_sha256"] = right["metadata"]["stimuli_sha256"] = "stale"
+    right["rows"][0]["context"] += " revised"
+    with pytest.raises(ValueError, match="identical materials"):
+        compare_runs(left, right)

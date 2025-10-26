@@ -1,6 +1,7 @@
 """Compare saved scores on identical lexical frames."""
 
 import math
+from copy import deepcopy
 from statistics import mean
 
 from .analysis import analyze, bootstrap
@@ -93,4 +94,5 @@ def compare_runs(left: dict, right: dict, samples=2000, seed=17) -> dict:
         })
     return {"schema_version": 1, "kind": "paired_comparison",
             "direction": "right_minus_left", "analysis": {"samples": samples, "seed": seed},
+            "metadata": {"left": deepcopy(left["metadata"]), "right": deepcopy(right["metadata"])},
             "summary": summary}
