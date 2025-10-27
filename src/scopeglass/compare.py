@@ -26,6 +26,9 @@ def validate_run(run: dict) -> None:
             raise ValueError(f"Run metadata.{field} must be a nonempty string")
     if type(metadata.get("empirical")) is not bool:
         raise ValueError("Run metadata.empirical must be a boolean")
+    expected_empirical = {"toy": False, "huggingface": True}.get(metadata["backend"])
+    if expected_empirical is not None and metadata["empirical"] != expected_empirical:
+        raise ValueError("Run metadata backend contradicts empirical status")
     if not isinstance(run.get("rows"), list) or not run["rows"]:
         raise ValueError("Run rows must be a nonempty list")
     for index, row in enumerate(run["rows"]):

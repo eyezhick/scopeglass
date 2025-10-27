@@ -219,3 +219,27 @@ def test_materials_are_checked_directly_even_when_recorded_hashes_match():
     right["rows"][0]["context"] += " revised"
     with pytest.raises(ValueError, match="identical materials"):
         compare_runs(left, right)
+
+
+@pytest.mark.parametrize("backend,empirical", [("toy", True), ("huggingface", False)])
+def test_known_backends_cannot_mislabel_empirical_status(backend, empirical):
+    run = saved_run()
+    run["metadata"].update(backend=backend, empirical=empirical)
+    with pytest.raises(ValueError, match="contradicts empirical"):
+        validate_run(run)
+
+
+def test_toy_and_empirical_runs_cannot_be_silently_compared():
+    left = saved_run()
+    right = deepcopy(left)
+    right["metadata"].update(backend="huggingface", model="test-model", empirical=True)
+    with pytest.raises(ValueError, match="toy and empirical"):
+        compare_runs(left, right)
+
+
+def test_two_empirical_model_records_are_comparable():
+    left = saved_run()
+    right = deepcopy(left)
+    left["metadata"].update(backend="huggingface", model="first", empirical=True)
+    right["metadata"].update(backend="huggingface", model="second", empirical=True)
+    assert compare_runs(left, right, samples=5)["summary"][0]["estimate"] == 0
