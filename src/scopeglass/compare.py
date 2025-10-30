@@ -90,6 +90,9 @@ def compare_runs(left: dict, right: dict, samples=2000, seed=17) -> dict:
                  for item in result["items"]]
         summary.append({
             "key": result["key"], "title": result["title"],
+            "interpretation": "Positive: RIGHT has a larger contrast than LEFT; "
+                              "this is not automatically a better model.",
+            "contrast_interpretation": result["interpretation"],
             "left_estimate": baseline["estimate"], "right_estimate": result["estimate"],
             "estimate": mean(item["delta"] for item in items),
             "ci95": bootstrap([item["delta"] for item in items], samples=samples, seed=seed),

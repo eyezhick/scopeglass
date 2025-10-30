@@ -243,3 +243,20 @@ def test_two_empirical_model_records_are_comparable():
     left["metadata"].update(backend="huggingface", model="first", empirical=True)
     right["metadata"].update(backend="huggingface", model="second", empirical=True)
     assert compare_runs(left, right, samples=5)["summary"][0]["estimate"] == 0
+
+
+def test_delta_direction_and_contrast_meaning_are_explicit():
+    left = saved_run()
+    right = deepcopy(left)
+    items = {row["item"] for row in right["rows"]}
+    shift_ambiguous_cost(right, dict.fromkeys(items, 2))
+    forward = compare_runs(left, right, samples=5)
+    reverse = compare_runs(right, left, samples=5)
+    assert forward["direction"] == "right_minus_left"
+    a, b = forward["summary"][0], reverse["summary"][0]
+    assert a["estimate"] == 2
+    assert b["estimate"] == -2
+    assert b["ci95"] == [-a["ci95"][1], -a["ci95"][0]]
+    assert "RIGHT" in a["interpretation"]
+    assert "better model" in a["interpretation"]
+    assert "missing-comma cost" in a["contrast_interpretation"]
