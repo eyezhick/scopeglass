@@ -46,3 +46,20 @@ def test_diagnostics_recompute_without_modifying_saved_run():
     original = deepcopy(run)
     assert [row["value"] for row in item_diagnostics(run)] == [3, 1]
     assert run == original
+
+
+def test_leave_one_out_recomputes_mean_of_remaining_frames():
+    result = item_diagnostics(run_with_effects([1, 3, 8]))
+    by_value = {row["value"]: row for row in result}
+    assert by_value[8]["leave_one_out"] == 2
+    assert by_value[8]["mean_shift"] == -2
+    assert by_value[1]["leave_one_out"] == 5.5
+    assert by_value[1]["mean_shift"] == 1.5
+    assert by_value[3]["leave_one_out"] == 4.5
+
+
+def test_single_frame_has_no_leave_one_out_estimate():
+    row = item_diagnostics(run_with_effects([3]))[0]
+    assert row["value"] == 3
+    assert row["leave_one_out"] is None
+    assert row["mean_shift"] is None
