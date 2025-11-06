@@ -260,3 +260,41 @@ def test_delta_direction_and_contrast_meaning_are_explicit():
     assert "RIGHT" in a["interpretation"]
     assert "better model" in a["interpretation"]
     assert "missing-comma cost" in a["contrast_interpretation"]
+
+
+def test_same_frame_names_in_different_experiments_remain_separate():
+    left = saved_run("all")
+    for row in left["rows"]:
+        row["item"] = "frame-" + row["item"].rsplit("-", 1)[1]
+    right = deepcopy(left)
+    for row in right["rows"]:
+        offset = int(row["item"].rsplit("-", 1)[1]) + 1
+        row["surprisal_bits"] += offset
+        row["tokens"][0]["bits"] += offset
+    right["rows"].reverse()
+    result = compare_runs(left, right, samples=5)
+    assert len({row["key"] for row in result["summary"]}) == len(result["summary"])
+    assert all(row["estimate"] == 0 and row["ci95"] == [0, 0] for row in result["summary"])
+
+
+def test_comparing_different_tokenizations_preserves_input_records():
+    left = saved_run()
+    right = deepcopy(left)
+    for row in right["rows"]:
+        bits = row["surprisal_bits"] / 2
+        row["tokens"] = [{"id": 1, "text": row["target"][:2], "bits": bits},
+                         {"id": 2, "text": row["target"][2:], "bits": bits}]
+    originals = deepcopy((left, right))
+    result = compare_runs(left, right, samples=5)
+    assert (left, right) == originals
+    assert result["summary"][0]["estimate"] == 0
+
+
+def test_relabeling_factor_cells_does_not_bypass_material_matching():
+    left = saved_run()
+    right = deepcopy(left)
+    for row in right["rows"]:
+        boundary = row["factors"]["boundary"]
+        row["factors"]["boundary"] = "comma" if boundary == "absent" else "absent"
+    with pytest.raises(ValueError, match="identical materials"):
+        compare_runs(left, right, samples=5)
