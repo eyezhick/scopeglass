@@ -83,3 +83,47 @@ Intervals reflect variation in the authored lexical frames. They do not account
 for model-training variation, the selection of templates or contrast, human
 participant variation, or repeated comparisons. A collapsed interval can result
 from identical toy effects or a single frame; it does not establish certainty.
+
+## A small example you can calculate by hand
+
+This example uses stipulated toy scores, not a measured language-model result.
+Keep two NP/Z frames and increase only the ambiguous, comma-absent cell of the
+second frame by four bits. The baseline effects are `[2.5, 2.5]`; the right-hand
+effects become `[2.5, 6.5]`. Their paired deltas are `[0, 4]`.
+
+```python
+from copy import deepcopy
+from scopeglass.compare import compare_runs
+from scopeglass.diagnostics import item_diagnostics
+from scopeglass.scorers import ToyScorer
+from scopeglass.stimuli import generate
+
+scorer = ToyScorer()
+stimuli = generate("garden_path")
+frames = sorted({row.item for row in stimuli})[:2]
+left = {
+    "schema_version": 1,
+    "metadata": dict(scorer.metadata),
+    "rows": [{**row.to_dict(), **scorer.score(row)}
+             for row in stimuli if row.item in frames],
+}
+right = deepcopy(left)
+for row in right["rows"]:
+    if (row["item"] == frames[1]
+            and row["factors"] == {"ambiguity": "ambiguous", "boundary": "absent"}):
+        row["surprisal_bits"] += 4
+        row["tokens"][0]["bits"] += 4
+
+contrast = compare_runs(left, right)["summary"][0]
+assert contrast["left_estimate"] == 2.5
+assert contrast["right_estimate"] == 4.5
+assert contrast["estimate"] == 2
+assert contrast["ci95"] == [0, 4]
+assert [row["mean_shift"] for row in item_diagnostics(right)] == [-2, 2]
+```
+
+The larger frame comes first in the diagnostics. Removing it lowers the right
+mean from 4.5 to 2.5; removing the other frame raises the mean to 6.5. The
+comparison asks how much the contrast changed; the diagnostic asks how sensitive
+one run's mean is to each frame. Neither operation supports deleting the larger
+frame simply because it changes the answer.
