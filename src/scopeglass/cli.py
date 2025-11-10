@@ -1,5 +1,4 @@
 import argparse
-import hashlib
 import json
 import platform
 import sys
@@ -8,6 +7,7 @@ from pathlib import Path
 
 from . import __version__
 from .analysis import analyze
+from .materials import load_csv, load_jsonl, material_hash, validate_materials
 from .report import write_report
 from .scorers import HuggingFaceScorer, ToyScorer
 from .stimuli import generate
@@ -32,6 +32,7 @@ def main(argv=None):
     run.add_argument("--bootstrap", type=int, default=2000)
     run.add_argument("--seed", type=int, default=17)
     run.add_argument("--out", type=Path, default=Path("runs/latest"))
+    run.add_argument("--materials", type=Path, help="Custom full-frame JSONL or CSV materials")
     report = commands.add_parser("report", help="Rebuild a report from a saved run")
     report.add_argument("input", type=Path)
     report.add_argument("--out", type=Path, required=True)
@@ -48,6 +49,14 @@ def main(argv=None):
             return
         if args.threads < 1 or args.bootstrap < 1:
             raise ValueError("--threads and --bootstrap must be positive")
+        if args.materials:
+            loader = load_csv if args.materials.suffix.lower() == ".csv" else load_jsonl
+            stimuli = loader(args.materials)
+            if args.experiment != "all":
+                stimuli = [row for row in stimuli if row.experiment == args.experiment]
+        else:
+            stimuli = generate(args.experiment)
+        validate_materials(stimuli)
         if args.backend == "hf":
             import torch
             torch.set_num_threads(args.threads)
@@ -55,13 +64,11 @@ def main(argv=None):
         else:
             scorer = ToyScorer()
             print("TOY ORACLE: stipulated values, not measured model behavior", file=sys.stderr)
-        stimuli = generate(args.experiment)
         rows = []
         for i, row in enumerate(stimuli, 1):
             rows.append({**row.to_dict(), **scorer.score(row)})
             if i % 24 == 0:
                 print(f"Scored {i}/{len(stimuli)}", file=sys.stderr)
-        material = json.dumps([row.to_dict() for row in stimuli], sort_keys=True).encode()
         analysis_args = {"samples": args.bootstrap, "seed": args.seed}
         data = {
             "schema_version": 1,
@@ -69,7 +76,7 @@ def main(argv=None):
                 **scorer.metadata, "scopeglass": __version__, "python": platform.python_version(),
                 "platform": platform.platform(),
                 "created_utc": datetime.now(timezone.utc).isoformat(),
-                "stimuli_sha256": hashlib.sha256(material).hexdigest(), "threads": args.threads,
+                "stimuli_sha256": material_hash(stimuli), "threads": args.threads,
                 "experiment": args.experiment,
             },
             "analysis": analysis_args, "summary": analyze(rows, **analysis_args), "rows": rows,
