@@ -7,7 +7,15 @@ from pathlib import Path
 
 from . import __version__
 from .analysis import analyze
-from .materials import load_csv, load_jsonl, material_hash, validate_materials
+from .materials import (
+    describe_materials,
+    load_csv,
+    load_jsonl,
+    material_hash,
+    validate_materials,
+    write_csv,
+    write_jsonl,
+)
 from .report import write_report
 from .scorers import HuggingFaceScorer, ToyScorer
 from .stimuli import generate
@@ -21,6 +29,9 @@ def main(argv=None):
     export = commands.add_parser("stimuli", help="Export the original factorial materials as JSONL")
     export.add_argument("--experiment", choices=EXPERIMENTS,
                         default="all")
+    export.add_argument("--out", type=Path, help="Write JSONL or CSV, chosen by file suffix")
+    inspect = commands.add_parser("validate", help="Inspect a complete JSONL or CSV design")
+    inspect.add_argument("input", type=Path)
     run = commands.add_parser("run", help="Score materials and produce JSON plus an offline report")
     run.add_argument("--backend", choices=["toy", "hf"], default="toy")
     run.add_argument("--model", default="distilbert/distilgpt2")
@@ -39,8 +50,17 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "stimuli":
-            for row in generate(args.experiment):
-                print(json.dumps(row.to_dict()))
+            rows = generate(args.experiment)
+            if args.out:
+                writer = write_csv if args.out.suffix.lower() == ".csv" else write_jsonl
+                writer(rows, args.out)
+            else:
+                for row in rows:
+                    print(json.dumps(row.to_dict()))
+            return
+        if args.command == "validate":
+            loader = load_csv if args.input.suffix.lower() == ".csv" else load_jsonl
+            print(json.dumps(describe_materials(loader(args.input)), indent=2))
             return
         if args.command == "report":
             data = json.loads(args.input.read_text())

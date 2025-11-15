@@ -30,3 +30,13 @@ def test_invalid_materials_fail_before_model_loading(tmp_path, monkeypatch):
     with pytest.raises(SystemExit) as error:
         main(["run", "--backend", "hf", "--materials", str(source)])
     assert error.value.code == 2
+
+
+def test_cli_material_export_and_validation_roundtrip(tmp_path, capsys):
+    source = tmp_path / "materials.csv"
+    main(["stimuli", "--experiment", "np_s", "--out", str(source)])
+    main(["validate", str(source)])
+    description = json.loads(capsys.readouterr().out)
+    assert description["n_items"] == 12
+    assert description["n_stimuli"] == 48
+    assert list(description["experiments"]) == ["np_s"]
