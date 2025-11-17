@@ -12,6 +12,7 @@ from .materials import (
     load_csv,
     load_jsonl,
     material_hash,
+    select_items,
     validate_materials,
     write_csv,
     write_jsonl,
@@ -44,13 +45,16 @@ def main(argv=None):
     run.add_argument("--seed", type=int, default=17)
     run.add_argument("--out", type=Path, default=Path("runs/latest"))
     run.add_argument("--materials", type=Path, help="Custom full-frame JSONL or CSV materials")
+    for command in (run, export):
+        command.add_argument("--item", action="append", help="Select a whole item; repeatable")
+        command.add_argument("--limit-items", type=int, help="Keep the first N complete frames")
     report = commands.add_parser("report", help="Rebuild a report from a saved run")
     report.add_argument("input", type=Path)
     report.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "stimuli":
-            rows = generate(args.experiment)
+            rows = select_items(generate(args.experiment), args.item, args.limit_items)
             if args.out:
                 writer = write_csv if args.out.suffix.lower() == ".csv" else write_jsonl
                 writer(rows, args.out)
@@ -77,6 +81,7 @@ def main(argv=None):
         else:
             stimuli = generate(args.experiment)
         validate_materials(stimuli)
+        stimuli = select_items(stimuli, args.item, args.limit_items)
         if args.backend == "hf":
             import torch
             torch.set_num_threads(args.threads)

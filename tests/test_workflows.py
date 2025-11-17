@@ -40,3 +40,20 @@ def test_cli_material_export_and_validation_roundtrip(tmp_path, capsys):
     assert description["n_items"] == 12
     assert description["n_stimuli"] == 48
     assert list(description["experiments"]) == ["np_s"]
+
+
+def test_cli_selection_keeps_every_condition_for_requested_frame(tmp_path):
+    main(["run", "--item", "agr-03", "--limit-items", "1", "--out", str(tmp_path),
+          "--bootstrap", "10"])
+    result = json.loads((tmp_path / "results.json").read_text())
+    assert len(result["rows"]) == 8
+    assert {row["item"] for row in result["rows"]} == {"agr-03"}
+    assert all(result["n_items"] == 1 for result in result["summary"])
+
+
+def test_unknown_cli_item_fails_without_creating_output(tmp_path):
+    output = tmp_path / "run"
+    with pytest.raises(SystemExit):
+        main(["run", "--item", "missing-item", "--out", str(output)])
+    assert not output.exists()
+
