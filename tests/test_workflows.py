@@ -57,3 +57,13 @@ def test_unknown_cli_item_fails_without_creating_output(tmp_path):
         main(["run", "--item", "missing-item", "--out", str(output)])
     assert not output.exists()
 
+
+def test_cli_paired_comparison_has_zero_delta_for_identical_runs(tmp_path):
+    main(["run", "--item", "nps-00", "--out", str(tmp_path), "--bootstrap", "10"])
+    source = str(tmp_path / "results.json")
+    output = tmp_path / "comparison.json"
+    main(["compare", source, source, "--bootstrap", "10", "--out", str(output)])
+    comparison = json.loads(output.read_text())
+    assert comparison["direction"] == "right_minus_left"
+    assert comparison["summary"][0]["estimate"] == 0
+    assert comparison["summary"][0]["ci95"] == [0, 0]

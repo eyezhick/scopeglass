@@ -7,6 +7,7 @@ from pathlib import Path
 
 from . import __version__
 from .analysis import analyze
+from .compare import compare_runs
 from .materials import (
     describe_materials,
     load_csv,
@@ -51,8 +52,27 @@ def main(argv=None):
     report = commands.add_parser("report", help="Rebuild a report from a saved run")
     report.add_argument("input", type=Path)
     report.add_argument("--out", type=Path, required=True)
+    compare = commands.add_parser("compare", help="Compare matched runs: RIGHT minus LEFT")
+    compare.add_argument("left", type=Path)
+    compare.add_argument("right", type=Path)
+    compare.add_argument("--out", type=Path)
+    compare.add_argument("--bootstrap", type=int, default=2000)
+    compare.add_argument("--seed", type=int, default=17)
     args = parser.parse_args(argv)
     try:
+        if args.command == "compare":
+            result = compare_runs(
+                json.loads(args.left.read_text(encoding="utf-8")),
+                json.loads(args.right.read_text(encoding="utf-8")),
+                samples=args.bootstrap, seed=args.seed,
+            )
+            content = json.dumps(result, indent=2, allow_nan=False) + "\n"
+            if args.out:
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+                args.out.write_text(content, encoding="utf-8")
+            else:
+                print(content, end="")
+            return
         if args.command == "stimuli":
             rows = select_items(generate(args.experiment), args.item, args.limit_items)
             if args.out:
