@@ -22,7 +22,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <main>
 <header><div class="brand">scopeglass<span style="color:var(--green)"> /</span></div><div class="eyebrow">An instrument for model grammar · v0.1</div></header>
 <h1>Reading between<br>the branches.</h1>
-<p class="intro">A sentence can lead you down the wrong path. Does a language model feel the turn? Three controlled experiments in ambiguity, agreement, and scope.</p>
+<p class="intro">A sentence can lead you down the wrong path. Does a language model feel the turn? Controlled experiments in ambiguity, agreement, and scope.</p>
 <div class="ribbon" id="provenance"></div>
 <div class="specimen"><div class="eyebrow">01 / A temporary ambiguity</div>
 <div class="sentence">While the hunter hunted the deer <mark>ran</mark> into the woods.</div>
@@ -32,7 +32,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <p class="muted">Surprisal is −log₂ P(target | context). One extra bit means half the probability. Effects below are paired contrasts; the dots are lexical items, and intervals resample whole items. Each plot uses its own symmetric scale around zero.</p>
 <div class="cards" id="cards"></div></section>
 <section><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
-<div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option><option value="garden_path">Garden paths · NP/Z</option><option value="agreement">Agreement attraction</option><option value="polarity">Polarity & scope</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><span id="count" class="count" aria-live="polite"></span></div>
+<div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><span id="count" class="count" aria-live="polite"></span></div>
 <div class="table-wrap"><table><thead><tr><th>Condition</th><th>Sentence · scored region highlighted</th><th>Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 <details><summary>How to read these experiments</summary>
@@ -47,25 +47,114 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <script id="run-data" type="application/json">__SCOPEGLASS_DATA__</script>
 <script>
 'use strict';
-const run=JSON.parse(document.getElementById('run-data').textContent);
-const $=id=>document.getElementById(id);
-const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
-const signed=n=>(n>=0?'+':'')+n.toFixed(2);
-$('provenance').textContent=(run.metadata.empirical?'MEASURED RUN':'TOY ORACLE · ILLUSTRATIVE, NOT MODEL RESULTS')+' / '+run.metadata.model+' / '+run.rows.length+' scored conditions';
-$('metadata').textContent=JSON.stringify({metadata:run.metadata,analysis:run.analysis},null,2);
-function dotplot(result){
- const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 300 58');svg.classList.add('dotplot');svg.setAttribute('role','img');svg.setAttribute('aria-label','Item effects range from '+Math.min(...result.items.map(i=>i.value)).toFixed(2)+' to '+Math.max(...result.items.map(i=>i.value)).toFixed(2)+' bits');
- const max=Math.max(1,...result.items.map(i=>Math.abs(i.value)),...result.ci95.map(Math.abs)),x=v=>150+v/max*135;
- const shape=(name,attrs)=>{const s=document.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>s.setAttribute(k,v));svg.append(s);return s;};
- shape('line',{x1:15,y1:29,x2:285,y2:29,stroke:'#cdd2c7'});shape('line',{x1:150,y1:4,x2:150,y2:54,stroke:'#9ba995','stroke-dasharray':'3 3'});
- result.items.forEach((item,i)=>{const c=shape('circle',{cx:x(item.value),cy:15+(i%4)*8,r:3,fill:'#166650',opacity:'.7'});const title=document.createElementNS(ns,'title');title.textContent=item.item+': '+signed(item.value)+' bits';c.append(title);});
- shape('line',{x1:x(result.ci95[0]),y1:49,x2:x(result.ci95[1]),y2:49,stroke:'#b54828','stroke-width':3});shape('circle',{cx:x(result.estimate),cy:49,r:4,fill:'#b54828'});return svg;
+const run = JSON.parse(document.getElementById('run-data').textContent);
+const $ = id => document.getElementById(id);
+const experimentNames = {
+  garden_path: 'Garden paths · NP/Z',
+  agreement: 'Agreement attraction',
+  polarity: 'Polarity & scope',
+  np_s: 'NP/S ambiguity',
+};
+const el = (tag, text, cls) => {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text;
+  if (cls) node.className = cls;
+  return node;
+};
+const signed = n => (n >= 0 ? '+' : '') + n.toFixed(2);
+for (const experiment of new Set(run.rows.map(row => row.experiment))) {
+  const option = el('option', experimentNames[experiment] || experiment);
+  option.value = experiment;
+  $('experiment').append(option);
 }
-for(const result of run.summary){const c=el('div',undefined,'card');c.append(el('h3',result.title));const number=el('div',signed(result.estimate),'number');number.append(el('span',' bits','unit'));c.append(number,el('div','95% CI ['+result.ci95.map(signed).join(', ')+'] · n='+result.n_items,'ci'),dotplot(result),el('p',result.interpretation));$('cards').append(c);}
-function updateItems(){const selection=$('experiment').value;$('item').replaceChildren(el('option','All frames'));$('item').firstChild.value='all';[...new Set(run.rows.filter(r=>selection==='all'||r.experiment===selection).map(r=>r.item))].forEach(id=>{const o=el('option',id);o.value=id;$('item').append(o);});}
-function render(){const q=$('search').value.toLowerCase(),experiment=$('experiment').value,item=$('item').value;const filtered=run.rows.filter(r=>(experiment==='all'||r.experiment===experiment)&&(item==='all'||r.item===item)&&(r.context+r.target+r.spillover).toLowerCase().includes(q));$('rows').replaceChildren();
-for(const row of filtered){const tr=el('tr'),condition=el('td');condition.append(el('b',row.item),el('div',Object.entries(row.factors).map(([k,v])=>k+': '+v).join(' / '),'muted'));const sentence=el('td');sentence.append(document.createTextNode(row.context+' '),el('mark',row.target.trim()),document.createTextNode(row.spillover));sentence.append(el('span',row.tokens.map(t=>JSON.stringify(t.text)+' '+t.bits.toFixed(3)+'b').join(' · '),'token'));tr.append(condition,sentence,el('td',row.surprisal_bits.toFixed(3)+' bits','bits'));$('rows').append(tr);}
-$('count').textContent=filtered.length+' conditions';}
-$('experiment').addEventListener('change',()=>{updateItems();render();});$('item').addEventListener('change',render);$('search').addEventListener('input',render);updateItems();render();
+$('provenance').textContent = (run.metadata.empirical
+  ? 'MEASURED RUN' : 'TOY ORACLE · ILLUSTRATIVE, NOT MODEL RESULTS')
+  + ' / ' + run.metadata.model + ' / ' + run.rows.length + ' scored conditions';
+$('metadata').textContent = JSON.stringify({metadata: run.metadata, analysis: run.analysis}, null, 2);
+
+function dotplot(result) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 300 58');
+  svg.classList.add('dotplot');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Item effects range from '
+    + Math.min(...result.items.map(i => i.value)).toFixed(2) + ' to '
+    + Math.max(...result.items.map(i => i.value)).toFixed(2) + ' bits');
+  const max = Math.max(1, ...result.items.map(i => Math.abs(i.value)), ...result.ci95.map(Math.abs));
+  const x = value => 150 + value / max * 135;
+  const shape = (name, attrs) => {
+    const node = document.createElementNS(ns, name);
+    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+    svg.append(node);
+    return node;
+  };
+  shape('line', {x1: 15, y1: 29, x2: 285, y2: 29, stroke: '#cdd2c7'});
+  shape('line', {x1: 150, y1: 4, x2: 150, y2: 54, stroke: '#9ba995', 'stroke-dasharray': '3 3'});
+  result.items.forEach((item, index) => {
+    const circle = shape('circle', {
+      cx: x(item.value), cy: 15 + (index % 4) * 8, r: 3, fill: '#166650', opacity: '.7',
+    });
+    const title = document.createElementNS(ns, 'title');
+    title.textContent = item.item + ': ' + signed(item.value) + ' bits';
+    circle.append(title);
+  });
+  shape('line', {
+    x1: x(result.ci95[0]), y1: 49, x2: x(result.ci95[1]), y2: 49,
+    stroke: '#b54828', 'stroke-width': 3,
+  });
+  shape('circle', {cx: x(result.estimate), cy: 49, r: 4, fill: '#b54828'});
+  return svg;
+}
+for (const result of run.summary) {
+  const card = el('div', undefined, 'card');
+  card.append(el('h3', result.title));
+  const number = el('div', signed(result.estimate), 'number');
+  number.append(el('span', ' bits', 'unit'));
+  card.append(number, el('div', '95% CI [' + result.ci95.map(signed).join(', ')
+    + '] · n=' + result.n_items, 'ci'), dotplot(result), el('p', result.interpretation));
+  $('cards').append(card);
+}
+
+function updateItems() {
+  const selection = $('experiment').value;
+  $('item').replaceChildren(el('option', 'All frames'));
+  $('item').firstChild.value = 'all';
+  const items = new Set(run.rows
+    .filter(row => selection === 'all' || row.experiment === selection).map(row => row.item));
+  for (const id of items) {
+    const option = el('option', id);
+    option.value = id;
+    $('item').append(option);
+  }
+}
+function render() {
+  const query = $('search').value.toLowerCase();
+  const experiment = $('experiment').value;
+  const item = $('item').value;
+  const filtered = run.rows.filter(row => (experiment === 'all' || row.experiment === experiment)
+    && (item === 'all' || row.item === item)
+    && (row.context + row.target + row.spillover).toLowerCase().includes(query));
+  $('rows').replaceChildren();
+  for (const row of filtered) {
+    const tr = el('tr');
+    const condition = el('td');
+    condition.append(el('b', row.item),
+      el('div', Object.entries(row.factors).map(([key, value]) => key + ': ' + value).join(' / '), 'muted'));
+    const sentence = el('td');
+    sentence.append(document.createTextNode(row.context + ' '), el('mark', row.target.trim()),
+      document.createTextNode(row.spillover));
+    sentence.append(el('span', row.tokens.map(token => JSON.stringify(token.text)
+      + ' ' + token.bits.toFixed(3) + 'b').join(' · '), 'token'));
+    tr.append(condition, sentence, el('td', row.surprisal_bits.toFixed(3) + ' bits', 'bits'));
+    $('rows').append(tr);
+  }
+  $('count').textContent = filtered.length + ' conditions';
+}
+$('experiment').addEventListener('change', () => { updateItems(); render(); });
+$('item').addEventListener('change', render);
+$('search').addEventListener('input', render);
+updateItems();
+render();
 </script>
 </html>
