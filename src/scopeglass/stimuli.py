@@ -64,7 +64,7 @@ GARDEN_PATH = [
     ("officer", "searched", "waited", "room", "filled", " with smoke."),
     ("driver", "parked", "hesitated", "truck", "rolled", " down the hill."),
     ("artist", "sketched", "smiled", "model", "sneezed", " very loudly."),
-    ("sailor", "rowed", "rested", "boat", "drifted", " toward the shore."),
+    ("sailor", "rowed", "shivered", "boat", "drifted", " toward the shore."),
     ("tailor", "sewed", "snored", "shirt", "tore", " at the seam."),
 ]
 
