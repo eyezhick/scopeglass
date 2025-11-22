@@ -30,6 +30,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <p class="muted" style="font-size:13px;margin-bottom:0">The parse sketch illustrates the human-readable hypothesis. It is not a recovered model state.</p></div>
 <section><div class="eyebrow">02 / Effects, not a leaderboard</div><h2>What changed at the critical word?</h2>
 <p class="muted">Surprisal is −log₂ P(target | context). One extra bit means half the probability. Effects below are paired contrasts; the dots are lexical items, and intervals resample whole items. Each plot uses its own symmetric scale around zero.</p>
+<p class="count" id="overview"></p>
 <div class="cards" id="cards"></div></section>
 <section><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
 <div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><span id="count" class="count" aria-live="polite"></span></div>
@@ -62,7 +63,11 @@ const el = (tag, text, cls) => {
   return node;
 };
 const signed = n => (n >= 0 ? '+' : '') + n.toFixed(2);
-for (const experiment of new Set(run.rows.map(row => row.experiment))) {
+const experiments = new Set(run.rows.map(row => row.experiment));
+const frames = new Set(run.rows.map(row => JSON.stringify([row.experiment, row.item])));
+$('overview').textContent = experiments.size + ' experiments · ' + frames.size
+  + ' lexical frames · ' + run.rows.length + ' scored conditions';
+for (const experiment of experiments) {
   const option = el('option', experimentNames[experiment] || experiment);
   option.value = experiment;
   $('experiment').append(option);
