@@ -33,7 +33,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <p class="count" id="overview"></p>
 <div class="cards" id="cards"></div></section>
 <section><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
-<div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><span id="count" class="count" aria-live="polite"></span></div>
+<div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><span id="count" class="count" aria-live="polite"></span></div>
 <div class="table-wrap"><table><thead><tr><th>Condition</th><th>Sentence · scored region highlighted</th><th>Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 <details><summary>How to read these experiments</summary>
@@ -133,13 +133,22 @@ function updateItems() {
     $('item').append(option);
   }
 }
-function render() {
-  const query = $('search').value.toLowerCase();
+function filteredRows() {
+  const query = $('search').value.trim().toLowerCase();
   const experiment = $('experiment').value;
   const item = $('item').value;
   const filtered = run.rows.filter(row => (experiment === 'all' || row.experiment === experiment)
     && (item === 'all' || row.item === item)
     && (row.context + row.target + row.spillover).toLowerCase().includes(query));
+  const order = $('order').value;
+  if (order === 'high') filtered.sort((a, b) => b.surprisal_bits - a.surprisal_bits);
+  if (order === 'low') filtered.sort((a, b) => a.surprisal_bits - b.surprisal_bits);
+  if (order === 'item') filtered.sort((a, b) => a.item.localeCompare(b.item, undefined, {numeric: true})
+    || a.experiment.localeCompare(b.experiment));
+  return filtered;
+}
+function render() {
+  const filtered = filteredRows();
   $('rows').replaceChildren();
   for (const row of filtered) {
     const tr = el('tr');
@@ -158,6 +167,7 @@ function render() {
 }
 $('experiment').addEventListener('change', () => { updateItems(); render(); });
 $('item').addEventListener('change', render);
+$('order').addEventListener('change', render);
 $('search').addEventListener('input', render);
 updateItems();
 render();

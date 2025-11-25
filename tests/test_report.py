@@ -101,3 +101,21 @@ def test_run_payload_round_trip_remains_inert(tmp_path):
     assert json.loads(data.group(1)) == run
     assert '<img src=x' not in html
     assert len(re.findall(r"<script\b", html)) == 2
+
+
+def test_score_order_combines_with_filters_without_mutating_run(report_run):
+    result = evaluate_report(report_run, "(() => { $('order').value = 'high'; "
+                             "$('experiment').value = 'np_s'; $('search').value = ' WORDS '; "
+                             "render(); return {scores: filteredRows().map(r => r.surprisal_bits), "
+                             "original: run.rows.map(r => r.surprisal_bits), "
+                             "count: $('count').textContent}; })()")
+    assert result == {"scores": [3, 2], "original": [3, 1, 2], "count": "2 conditions"}
+
+
+def test_low_score_and_natural_frame_order(report_run):
+    report_run["rows"][0]["item"] = "frame10"
+    result = evaluate_report(report_run, "(() => { $('order').value = 'low'; "
+                             "const low = filteredRows().map(r => r.surprisal_bits); "
+                             "$('order').value = 'item'; "
+                             "return {low, items: filteredRows().map(r => r.item)}; })()")
+    assert result == {"low": [1, 2, 3], "items": ["frame1", "frame2", "frame10"]}
