@@ -119,3 +119,15 @@ def test_low_score_and_natural_frame_order(report_run):
                              "$('order').value = 'item'; "
                              "return {low, items: filteredRows().map(r => r.item)}; })()")
     assert result == {"low": [1, 2, 3], "items": ["frame1", "frame2", "frame10"]}
+
+
+def test_reset_clears_all_filters_and_returns_focus_to_search(report_run):
+    result = evaluate_report(report_run, "(() => { $('experiment').value = 'np_s'; "
+                             "updateItems(); $('item').value = 'frame2'; "
+                             "$('search').value = 'absent'; $('order').value = 'high'; "
+                             "$('reset').click(); return {count: $('count').textContent, "
+                             "experiment: $('experiment').value, item: $('item').value, "
+                             "query: $('search').value, order: $('order').value, "
+                             "focused: $('search').focused}; })()")
+    assert result == {"count": "3 conditions", "experiment": "all", "item": "all",
+                      "query": "", "order": "source", "focused": True}
