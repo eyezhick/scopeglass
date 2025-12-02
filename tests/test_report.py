@@ -1,5 +1,7 @@
 """Exercise the offline report in Node with the small DOM surface it uses."""
 
+import csv
+import io
 import json
 import re
 import shutil
@@ -131,3 +133,24 @@ def test_reset_clears_all_filters_and_returns_focus_to_search(report_run):
                              "focused: $('search').focused}; })()")
     assert result == {"count": "3 conditions", "experiment": "all", "item": "all",
                       "query": "", "order": "source", "focused": True}
+
+
+def test_csv_preserves_quoted_multiline_fields_and_protects_formulas(report_run):
+    report_run["rows"][0].update({"context": 'A "quote", café\nsecond line',
+                                  "target": " =SUM(A1:A2)", "spillover": "\t@danger"})
+    exported = evaluate_report(report_run, "exportRowsCsv(run.rows)")
+    records = list(csv.DictReader(io.StringIO(exported)))
+    assert len(records) == 3
+    assert records[0]["context"] == 'A "quote", café\nsecond line'
+    assert records[0]["target"] == "' =SUM(A1:A2)"
+    assert records[0]["spillover"] == "'\t@danger"
+    assert records[0]["surprisal_bits"] == "3"
+    assert json.loads(records[0]["tokens"]) == report_run["rows"][0]["tokens"]
+
+
+def test_csv_uses_active_filters_and_order(report_run):
+    exported = evaluate_report(report_run, "(() => { $('experiment').value = 'np_s'; "
+                               "$('order').value = 'low'; "
+                               "return exportRowsCsv(filteredRows()); })()")
+    records = list(csv.DictReader(io.StringIO(exported)))
+    assert [row["item"] for row in records] == ["frame2", "frame1"]

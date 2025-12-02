@@ -33,7 +33,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <p class="count" id="overview"></p>
 <div class="cards" id="cards"></div></section>
 <section><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
-<div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><button id="reset" type="button">Reset filters</button><span id="count" class="count" aria-live="polite"></span></div>
+<div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><button id="export-csv" type="button">Export filtered CSV</button><button id="reset" type="button">Reset filters</button><span id="count" class="count" aria-live="polite"></span></div>
 <div class="table-wrap"><table><thead><tr><th>Condition</th><th>Sentence · scored region highlighted</th><th>Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 <details><summary>How to read these experiments</summary>
@@ -165,6 +165,32 @@ function render() {
   }
   $('count').textContent = filtered.length + ' conditions';
 }
+function csvCell(value) {
+  let text = String(value);
+  // Spreadsheet apps interpret leading operators as formulas, even inside quotes.
+  if (typeof value === 'string' && /^[\s\uFEFF]*[=+\-@]/u.test(text)) text = "'" + text;
+  return '"' + text.replaceAll('"', '""') + '"';
+}
+function exportRowsCsv(rows) {
+  const headers = ['experiment', 'item', 'factors', 'context', 'target', 'spillover',
+    'surprisal_bits', 'tokens'];
+  const records = rows.map(row => [row.experiment, row.item, JSON.stringify(row.factors),
+    row.context, row.target, row.spillover, row.surprisal_bits, JSON.stringify(row.tokens)]);
+  return [headers, ...records].map(record => record.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+function downloadFile(text, type, filename) {
+  const url = URL.createObjectURL(new Blob([text], {type}));
+  const link = el('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$('export-csv').addEventListener('click', () => {
+  downloadFile(exportRowsCsv(filteredRows()), 'text/csv;charset=utf-8', 'scopeglass-filtered.csv');
+});
 function resetFilters() {
   $('experiment').value = 'all';
   $('search').value = '';
