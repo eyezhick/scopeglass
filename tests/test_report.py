@@ -154,3 +154,14 @@ def test_csv_uses_active_filters_and_order(report_run):
                                "return exportRowsCsv(filteredRows()); })()")
     records = list(csv.DictReader(io.StringIO(exported)))
     assert [row["item"] for row in records] == ["frame2", "frame1"]
+
+
+def test_complete_json_download_ignores_view_filters_and_preserves_run(report_run):
+    report_run["metadata"]["notes"] = "</script><script>alert(1)</script>"
+    result = evaluate_report(report_run, "(() => { let saved; "
+                             "downloadFile = (text, type, filename) => { "
+                             "saved = {data: JSON.parse(text), type, filename}; }; "
+                             "$('experiment').value = 'agreement'; "
+                             "$('download-json').click(); return saved; })()")
+    assert result == {"data": report_run, "type": "application/json",
+                      "filename": "scopeglass-results.json"}

@@ -42,7 +42,9 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <p><b>Polarity.</b> Cross negation presence, its location, and ever/often. Measure how much negation changes the preference for ever over often. Scope selectivity is the matrix benefit minus the embedded benefit.</p>
 <p>These are small, authored English materials: 12 frames per experiment. Bootstrap intervals describe this item set, not all language. Verb frequency, plausibility, punctuation, lexical choice, and training overlap remain possible confounds. Surprisal is behavioral evidence; it does not establish that a model represents a particular parse, or that people would show the same effect. Spillover is displayed but not scored.</p>
 </details>
-<details><summary>Run provenance & reproducibility</summary><pre id="metadata"></pre></details>
+<details><summary>Run provenance & reproducibility</summary>
+<p>Save the complete run, including all sentences, token scores, analysis settings, and metadata.</p>
+<button id="download-json" type="button">Download complete run JSON</button><pre id="metadata"></pre></details>
 <footer>Scopeglass / Original materials, inspectable contrasts, no aggregate grammar grade. <a href="https://github.com/eyezhick/scopeglass">Source & methods ↗</a></footer>
 </main>
 <script id="run-data" type="application/json">__SCOPEGLASS_DATA__</script>
@@ -188,6 +190,9 @@ function downloadFile(text, type, filename) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+$('download-json').addEventListener('click', () => {
+  downloadFile(JSON.stringify(run, null, 2) + '\n', 'application/json', 'scopeglass-results.json');
+});
 $('export-csv').addEventListener('click', () => {
   downloadFile(exportRowsCsv(filteredRows()), 'text/csv;charset=utf-8', 'scopeglass-filtered.csv');
 });
