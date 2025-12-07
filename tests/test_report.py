@@ -165,3 +165,16 @@ def test_complete_json_download_ignores_view_filters_and_preserves_run(report_ru
                              "$('download-json').click(); return saved; })()")
     assert result == {"data": report_run, "type": "application/json",
                       "filename": "scopeglass-results.json"}
+
+
+def test_empty_search_explains_state_and_disables_empty_export(report_run):
+    result = evaluate_report(report_run, "(() => { $('search').value = 'not present'; render(); "
+                             "const empty = {hidden: $('empty-state').hidden, "
+                             "disabled: $('export-csv').disabled, "
+                             "rows: $('rows').children.length}; "
+                             "$('search').value = 'reader'; render(); return {empty, "
+                             "restored: {hidden: $('empty-state').hidden, "
+                             "disabled: $('export-csv').disabled, "
+                             "rows: $('rows').children.length}}; })()")
+    assert result == {"empty": {"hidden": False, "disabled": True, "rows": 0},
+                      "restored": {"hidden": True, "disabled": False, "rows": 3}}
