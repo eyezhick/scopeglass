@@ -13,7 +13,7 @@ h1{font:normal clamp(42px,6vw,76px)/1.05 Georgia,serif;letter-spacing:-2px;max-w
 .specimen{margin:38px 0;background:#e9ede3;padding:28px 32px;border:1px solid var(--line)}.sentence{font:27px/1.6 Georgia,serif;margin:12px 0 22px}mark{background:#d5e8a4;color:var(--ink);padding:2px 5px;border-radius:3px}
 .fork{display:grid;grid-template-columns:1fr 1fr;gap:20px;font:13px/1.7 ui-monospace,monospace}.fork>div{border-top:1px solid #9ba995;padding-top:12px}.muted{color:var(--muted)}
 section{margin-top:44px} .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{border-top:2px solid var(--green);padding:18px 0}.number{font:38px Georgia,serif}.unit{font:12px ui-monospace,monospace;color:var(--muted)}.card p{font-size:13px;margin:12px 0}
-.ci{font:12px ui-monospace,monospace}.dotplot{width:100%;height:58px;display:block} .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin:20px 0}label{font-size:12px;color:var(--muted);display:grid;gap:6px}select,input,button{background:transparent;color:var(--ink);border:1px solid #9ba995;padding:9px 12px;font:14px system-ui;max-width:100%}button{cursor:pointer}button:hover{background:#e9ede3}button:disabled{opacity:.5;cursor:default}#empty-state{padding:18px;border-left:3px solid var(--orange)}
+.ci{font:12px ui-monospace,monospace}.dotplot{width:100%;height:84px;display:block} .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin:20px 0}label{font-size:12px;color:var(--muted);display:grid;gap:6px}select,input,button{background:transparent;color:var(--ink);border:1px solid #9ba995;padding:9px 12px;font:14px system-ui;max-width:100%}button{cursor:pointer}button:hover{background:#e9ede3}button:disabled{opacity:.5;cursor:default}#empty-state{padding:18px;border-left:3px solid var(--orange)}
 .table-wrap{overflow:auto;border-top:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}th,td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{font:11px ui-monospace,monospace;color:var(--muted);text-transform:uppercase;white-space:nowrap}td:first-child{min-width:150px}td:nth-child(2){min-width:340px} .bits{white-space:nowrap;font:14px ui-monospace,monospace}.token{font:11px ui-monospace,monospace;color:var(--muted);display:block;margin-top:8px}
 details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{cursor:pointer;font-weight:600}pre{font-size:12px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}footer{border-top:1px solid var(--ink);margin-top:48px;padding-top:16px;font-size:12px;color:var(--muted)}a{color:var(--green)} .count{font:12px ui-monospace,monospace;color:var(--muted)}
 @media(max-width:700px){main{padding:24px 20px}.cards{grid-template-columns:1fr 1fr}.fork{grid-template-columns:1fr}header{flex-direction:column;gap:4px}.specimen{padding:20px}h1{letter-spacing:-1px}.sentence{font-size:23px}}
@@ -83,12 +83,13 @@ $('metadata').textContent = JSON.stringify({metadata: run.metadata, analysis: ru
 function dotplot(result) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 300 58');
+  svg.setAttribute('viewBox', '0 0 300 84');
   svg.classList.add('dotplot');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Item effects range from '
-    + Math.min(...result.items.map(i => i.value)).toFixed(2) + ' to '
-    + Math.max(...result.items.map(i => i.value)).toFixed(2) + ' bits');
+  svg.setAttribute('aria-label', result.title + '. Estimate ' + signed(result.estimate)
+    + ' bits; 95% bootstrap interval ' + result.ci95.map(signed).join(' to ')
+    + ' bits. Item effects range from ' + Math.min(...result.items.map(i => i.value)).toFixed(2)
+    + ' to ' + Math.max(...result.items.map(i => i.value)).toFixed(2) + ' bits.');
   const max = Math.max(1, ...result.items.map(i => Math.abs(i.value)), ...result.ci95.map(Math.abs));
   const x = value => 150 + value / max * 135;
   const shape = (name, attrs) => {
@@ -112,6 +113,13 @@ function dotplot(result) {
     stroke: '#b54828', 'stroke-width': 3,
   });
   shape('circle', {cx: x(result.estimate), cy: 49, r: 4, fill: '#b54828'});
+  for (const [value, anchor] of [[-max, 'start'], [0, 'middle'], [max, 'end']]) {
+    const label = shape('text', {
+      x: x(value), y: 76, fill: '#596762', 'font-size': 10,
+      'font-family': 'ui-monospace, monospace', 'text-anchor': anchor,
+    });
+    label.textContent = (value === 0 ? '0' : signed(value)) + ' bits';
+  }
   return svg;
 }
 for (const result of run.summary) {

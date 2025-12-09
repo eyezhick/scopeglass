@@ -178,3 +178,18 @@ def test_empty_search_explains_state_and_disables_empty_export(report_run):
                              "rows: $('rows').children.length}}; })()")
     assert result == {"empty": {"hidden": False, "disabled": True, "rows": 0},
                       "restored": {"hidden": True, "disabled": False, "rows": 3}}
+
+
+def test_chart_labels_show_scale_and_accessible_interval(report_run):
+    result = evaluate_report(report_run, "(() => { const plot = dotplot({title: 'Contrast', "
+                             "items: [{item: 'a', value: -2}, {item: 'b', value: 4}], "
+                             "ci95: [-1, 2], estimate: 0.5}); "
+                             "return {label: plot.attributes['aria-label'], "
+                             "ticks: plot.children.filter(n => n.tagName === 'text')"
+                             ".map(n => n.textContent), "
+                             "positions: plot.children.filter(n => n.tagName === 'circle')"
+                             ".map(n => n.attributes.cx)}; })()")
+    assert result["ticks"] == ["-4.00 bits", "0 bits", "+4.00 bits"]
+    assert result["positions"] == ["82.5", "285", "166.875"]
+    assert "95% bootstrap interval -1.00 to +2.00 bits" in result["label"]
+    assert "Item effects range from -2.00 to 4.00 bits" in result["label"]
