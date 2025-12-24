@@ -193,3 +193,10 @@ def test_chart_labels_show_scale_and_accessible_interval(report_run):
     assert result["positions"] == ["82.5", "285", "166.875"]
     assert "95% bootstrap interval -1.00 to +2.00 bits" in result["label"]
     assert "Item effects range from -2.00 to 4.00 bits" in result["label"]
+
+
+def test_print_context_identifies_active_filters(report_run):
+    result = evaluate_report(report_run, "(() => { $('experiment').value = 'np_s'; "
+                             "$('item').value = 'frame2'; $('search').value = 'reader'; render(); "
+                             "return $('print-note').textContent; })()")
+    assert result == "Evidence filters: NP/S ambiguity; frame2; search: reader. 1 conditions."

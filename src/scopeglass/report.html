@@ -17,6 +17,18 @@ section{margin-top:44px} .cards{display:grid;grid-template-columns:repeat(3,1fr)
 .table-wrap{overflow:auto;border-top:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}th,td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{font:11px ui-monospace,monospace;color:var(--muted);text-transform:uppercase;white-space:nowrap}td:first-child{min-width:150px}td:nth-child(2){min-width:340px} .bits{white-space:nowrap;font:14px ui-monospace,monospace}.token{font:11px ui-monospace,monospace;color:var(--muted);display:block;margin-top:8px}
 details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{cursor:pointer;font-weight:600}pre{font-size:12px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}footer{border-top:1px solid var(--ink);margin-top:48px;padding-top:16px;font-size:12px;color:var(--muted)}a{color:var(--green)} .count{font:12px ui-monospace,monospace;color:var(--muted)}
 :focus-visible{outline:3px solid var(--orange);outline-offset:4px}.skip-link{position:absolute;top:-80px;left:20px;z-index:2;background:var(--paper);padding:10px 16px}.skip-link:focus{top:12px}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.print-note{display:none}
+@media print {
+  :root{--paper:#fff;--ink:#000;--muted:#333;--line:#aaa}
+  body{background:#fff;font-size:11pt}main{max-width:none;padding:0}
+  h1{font-size:40pt;margin-top:24px}h2{font-size:23pt}
+  .controls,.skip-link,button{display:none!important}.print-note{display:block}
+  .table-wrap{overflow:visible}table{font-size:9pt}th,td{padding:9px 5px}
+  td:first-child,td:nth-child(2){min-width:0}td:nth-child(2){width:58%}
+  thead{display:table-header-group}tr,.card,.specimen{break-inside:avoid}
+  .ribbon,mark{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  section{margin-top:24px}.specimen{padding:16px}footer{margin-top:24px}
+}
 @media(max-width:700px){main{padding:24px 20px}.cards{grid-template-columns:1fr 1fr}.fork{grid-template-columns:1fr}header{flex-direction:column;gap:4px}.specimen{padding:20px}h1{letter-spacing:-1px}.sentence{font-size:23px}}
 @media(max-width:430px){.cards{grid-template-columns:1fr}}
 </style>
@@ -38,6 +50,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <section id="evidence" tabindex="-1"><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
 <p id="search-help" class="muted">Filter sentences by experiment or lexical frame, or search their full text. The effect summaries above always describe the complete run.</p>
 <div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" aria-describedby="search-help" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><button id="export-csv" type="button">Export filtered CSV</button><button id="reset" type="button">Reset filters</button><span id="count" class="count" aria-live="polite"></span></div>
+<p class="print-note" id="print-note"></p>
 <p id="empty-state" role="status" hidden>No conditions match these filters. Clear the search or reset filters to see the run again.</p>
 <div class="table-wrap" role="region" aria-label="Scored sentences" tabindex="0"><table><caption class="visually-hidden">Sentence scores for the current filters; the target region is highlighted.</caption><thead><tr><th scope="col">Condition</th><th scope="col">Sentence · scored region highlighted</th><th scope="col">Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
@@ -179,6 +192,11 @@ function render() {
     $('rows').append(tr);
   }
   $('count').textContent = filtered.length + ' conditions';
+  const experiment = $('experiment').value;
+  $('print-note').textContent = 'Evidence filters: '
+    + (experiment === 'all' ? 'all experiments' : experimentNames[experiment] || experiment)
+    + '; ' + ($('item').value === 'all' ? 'all frames' : $('item').value)
+    + '; search: ' + ($('search').value.trim() || 'none') + '. ' + filtered.length + ' conditions.';
   $('empty-state').hidden = filtered.length !== 0;
   $('export-csv').disabled = filtered.length === 0;
 }
