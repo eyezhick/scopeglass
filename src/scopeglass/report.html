@@ -34,10 +34,11 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 </style>
 <a class="skip-link" href="#evidence">Skip to sentence evidence</a>
 <main>
-<header><div class="brand">scopeglass<span style="color:var(--green)"> /</span></div><div class="eyebrow">An instrument for model grammar · v0.1</div></header>
+<header><div class="brand">scopeglass<span style="color:var(--green)"> /</span></div><div class="eyebrow">An instrument for model grammar</div></header>
 <h1>Reading between<br>the branches.</h1>
 <p class="intro">A sentence can lead you down the wrong path. Does a language model feel the turn? Controlled experiments in ambiguity, agreement, and scope.</p>
 <div class="ribbon" id="provenance"></div>
+<p id="run-kind" class="muted"></p>
 <noscript><p>This interactive report needs JavaScript to display the embedded run. Use the original results JSON for an accessible plain-text record.</p></noscript>
 <div class="specimen"><div class="eyebrow">01 / A temporary ambiguity</div>
 <div class="sentence">While the hunter hunted the deer <mark>ran</mark> into the woods.</div>
@@ -52,7 +53,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" aria-describedby="search-help" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><button id="export-csv" type="button">Export filtered CSV</button><button id="reset" type="button">Reset filters</button><span id="count" class="count" aria-live="polite"></span></div>
 <p class="print-note" id="print-note"></p>
 <p id="empty-state" role="status" hidden>No conditions match these filters. Clear the search or reset filters to see the run again.</p>
-<div class="table-wrap" role="region" aria-label="Scored sentences" tabindex="0"><table><caption class="visually-hidden">Sentence scores for the current filters; the target region is highlighted.</caption><thead><tr><th scope="col">Condition</th><th scope="col">Sentence · scored region highlighted</th><th scope="col">Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="table-wrap" role="region" aria-label="Scored sentences" tabindex="0"><table><caption class="visually-hidden">Sentence scores for the current filters; the target region is highlighted.</caption><thead><tr><th scope="col">Condition</th><th scope="col">Sentence · scored region highlighted</th><th scope="col" id="score-heading">Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 <details><summary>How to read these experiments</summary>
 <p><b>Garden paths.</b> Cross an optionally transitive verb with an intransitive control, and a comma with no comma. At the main verb, subtract the control's comma benefit from the ambiguous verb's comma benefit. A positive interaction is compatible with garden-path sensitivity.</p>
@@ -92,9 +93,15 @@ for (const experiment of experiments) {
   option.value = experiment;
   $('experiment').append(option);
 }
-$('provenance').textContent = (run.metadata.empirical
+const empirical = run.metadata.empirical === true;
+$('run-kind').textContent = empirical
+  ? 'These scores were measured from a language model. They describe these materials, not a general grammar ability or a human reading-time prediction.'
+  : 'These scores are stipulated by a toy oracle to illustrate the analysis. Their effects and intervals are not empirical findings about a language model.';
+$('score-heading').textContent = empirical ? 'Surprisal' : 'Toy surprisal';
+$('provenance').textContent = (empirical
   ? 'MEASURED RUN' : 'TOY ORACLE · ILLUSTRATIVE, NOT MODEL RESULTS')
-  + ' / ' + run.metadata.model + ' / ' + run.rows.length + ' scored conditions';
+  + ' / ' + run.metadata.model + ' / ' + run.rows.length + ' scored conditions'
+  + (run.metadata.created_utc ? ' / recorded ' + run.metadata.created_utc : '');
 $('metadata').textContent = JSON.stringify({metadata: run.metadata, analysis: run.analysis}, null, 2);
 
 function dotplot(result) {

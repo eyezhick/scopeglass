@@ -200,3 +200,15 @@ def test_print_context_identifies_active_filters(report_run):
                              "$('item').value = 'frame2'; $('search').value = 'reader'; render(); "
                              "return $('print-note').textContent; })()")
     assert result == "Evidence filters: NP/S ambiguity; frame2; search: reader. 1 conditions."
+
+
+@pytest.mark.parametrize("empirical,heading,phrase", [
+    (False, "Toy surprisal", "not empirical findings"),
+    (True, "Surprisal", "measured from a language model"),
+])
+def test_measured_and_toy_explanations(report_run, empirical, heading, phrase):
+    report_run["metadata"]["empirical"] = empirical
+    result = evaluate_report(report_run, "({heading: $('score-heading').textContent, "
+                             "explanation: $('run-kind').textContent})")
+    assert result["heading"] == heading
+    assert phrase in result["explanation"]
