@@ -58,6 +58,8 @@ class Element {
   click() { this.listeners.click?.(); }
   remove() {}
 }
+const window = {listeners: {},
+  addEventListener(name, callback) { this.listeners[name] = callback; }};
 const elements = new Map();
 const document = {
   getElementById(id) {
@@ -212,3 +214,30 @@ def test_measured_and_toy_explanations(report_run, empirical, heading, phrase):
                              "explanation: $('run-kind').textContent})")
     assert result["heading"] == heading
     assert phrase in result["explanation"]
+
+
+def test_pagination_preserves_full_exports_and_prints_all_matches(report_run):
+    report_run["rows"] = [{**report_run["rows"][0], "item": f"frame{i}"} for i in range(75)]
+    result = evaluate_report(report_run, "(() => { const initial = $('rows').children.length; "
+                             "$('next-page').click(); const second = $('page-status').textContent; "
+                             "const exported = filteredRows().length; "
+                             "window.listeners.beforeprint(); "
+                             "const printed = $('rows').children.length; "
+                             "window.listeners.afterprint(); "
+                             "const restored = $('page-status').textContent; "
+                             "$('item').value = 'frame74'; $('item').listeners.change(); "
+                             "return {initial, second, exported, printed, restored, "
+                             "filtered: $('page-status').textContent, "
+                             "nextDisabled: $('next-page').disabled}; })()")
+    assert result == {"initial": 24, "second": "25–48 of 75", "exported": 75, "printed": 75,
+                      "restored": "25–48 of 75", "filtered": "1–1 of 1", "nextDisabled": True}
+
+
+def test_page_size_all_and_last_partial_page(report_run):
+    report_run["rows"] = [report_run["rows"][0]] * 50
+    result = evaluate_report(report_run, "(() => { $('next-page').click(); $('next-page').click(); "
+                             "const last = $('page-status').textContent; "
+                             "$('page-size').value = 'all'; $('page-size').listeners.change(); "
+                             "return {last, count: $('rows').children.length, "
+                             "previousDisabled: $('previous-page').disabled}; })()")
+    assert result == {"last": "49–50 of 50", "count": 50, "previousDisabled": True}

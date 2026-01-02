@@ -22,7 +22,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
   :root{--paper:#fff;--ink:#000;--muted:#333;--line:#aaa}
   body{background:#fff;font-size:11pt}main{max-width:none;padding:0}
   h1{font-size:40pt;margin-top:24px}h2{font-size:23pt}
-  .controls,.skip-link,button{display:none!important}.print-note{display:block}
+  .controls,.pagination,.skip-link,button{display:none!important}.print-note{display:block}
   .table-wrap{overflow:visible}table{font-size:9pt}th,td{padding:9px 5px}
   td:first-child,td:nth-child(2){min-width:0}td:nth-child(2){width:58%}
   thead{display:table-header-group}tr,.card,.specimen{break-inside:avoid}
@@ -53,7 +53,13 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" aria-describedby="search-help" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><button id="export-csv" type="button">Export filtered CSV</button><button id="reset" type="button">Reset filters</button><span id="count" class="count" aria-live="polite"></span></div>
 <p class="print-note" id="print-note"></p>
 <p id="empty-state" role="status" hidden>No conditions match these filters. Clear the search or reset filters to see the run again.</p>
-<div class="table-wrap" role="region" aria-label="Scored sentences" tabindex="0"><table><caption class="visually-hidden">Sentence scores for the current filters; the target region is highlighted.</caption><thead><tr><th scope="col">Condition</th><th scope="col">Sentence · scored region highlighted</th><th scope="col" id="score-heading">Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="table-wrap" role="region" aria-label="Scored sentences" tabindex="0"><table><caption class="visually-hidden">Sentence scores on the current page; the target region is highlighted.</caption><thead><tr><th scope="col">Condition</th><th scope="col">Sentence · scored region highlighted</th><th scope="col" id="score-heading">Surprisal</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="controls pagination" aria-label="Evidence pages">
+<label>Rows per page<select id="page-size"><option value="24">24</option><option value="48">48</option><option value="96">96</option><option value="all">All</option></select></label>
+<button id="previous-page" type="button" aria-controls="rows">Previous</button>
+<span id="page-status" class="count" aria-live="polite"></span>
+<button id="next-page" type="button" aria-controls="rows">Next</button>
+</div>
 </section>
 <details><summary>How to read these experiments</summary>
 <p><b>Garden paths.</b> Cross an optionally transitive verb with an intransitive control, and a comma with no comma. At the main verb, subtract the control's comma benefit from the ambiguous verb's comma benefit. A positive interaction is compatible with garden-path sensitivity.</p>
@@ -182,10 +188,16 @@ function filteredRows() {
     || a.experiment.localeCompare(b.experiment));
   return filtered;
 }
-function render() {
+let page = 0;
+function render({printing = false} = {}) {
   const filtered = filteredRows();
+  const pageSize = $('page-size').value === 'all' ? filtered.length || 1
+    : Number($('page-size').value) || 24;
+  page = Math.min(page, Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
+  const start = printing ? 0 : page * pageSize;
+  const visible = printing ? filtered : filtered.slice(start, start + pageSize);
   $('rows').replaceChildren();
-  for (const row of filtered) {
+  for (const row of visible) {
     const tr = el('tr');
     const condition = el('td');
     condition.append(el('b', row.item),
@@ -199,6 +211,10 @@ function render() {
     $('rows').append(tr);
   }
   $('count').textContent = filtered.length + ' conditions';
+  $('page-status').textContent = filtered.length
+    ? (start + 1) + '–' + (start + visible.length) + ' of ' + filtered.length : '0 conditions';
+  $('previous-page').disabled = page === 0;
+  $('next-page').disabled = (page + 1) * pageSize >= filtered.length;
   const experiment = $('experiment').value;
   $('print-note').textContent = 'Evidence filters: '
     + (experiment === 'all' ? 'all experiments' : experimentNames[experiment] || experiment)
@@ -236,19 +252,28 @@ $('download-json').addEventListener('click', () => {
 $('export-csv').addEventListener('click', () => {
   downloadFile(exportRowsCsv(filteredRows()), 'text/csv;charset=utf-8', 'scopeglass-filtered.csv');
 });
+function applyFilters() {
+  page = 0;
+  render();
+}
 function resetFilters() {
   $('experiment').value = 'all';
   $('search').value = '';
   $('order').value = 'source';
   updateItems();
-  render();
+  applyFilters();
   $('search').focus();
 }
 $('reset').addEventListener('click', resetFilters);
-$('experiment').addEventListener('change', () => { updateItems(); render(); });
-$('item').addEventListener('change', render);
-$('order').addEventListener('change', render);
-$('search').addEventListener('input', render);
+$('experiment').addEventListener('change', () => { updateItems(); applyFilters(); });
+$('item').addEventListener('change', applyFilters);
+$('order').addEventListener('change', applyFilters);
+$('search').addEventListener('input', applyFilters);
+$('page-size').addEventListener('change', applyFilters);
+$('previous-page').addEventListener('click', () => { page = Math.max(0, page - 1); render(); });
+$('next-page').addEventListener('click', () => { page += 1; render(); });
+window.addEventListener('beforeprint', () => render({printing: true}));
+window.addEventListener('afterprint', () => render());
 updateItems();
 render();
 </script>
