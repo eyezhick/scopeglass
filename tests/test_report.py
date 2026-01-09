@@ -241,3 +241,22 @@ def test_page_size_all_and_last_partial_page(report_run):
                              "return {last, count: $('rows').children.length, "
                              "previousDisabled: $('previous-page').disabled}; })()")
     assert result == {"last": "49–50 of 50", "count": 50, "previousDisabled": True}
+
+
+def test_token_details_preserve_whitespace_and_optional_zero_id(report_run):
+    report_run["rows"][0]["tokens"] = [
+        {"text": " wor", "bits": 1.25, "id": 0},
+        {"text": '<img src=x>\n', "bits": 1.75},
+    ]
+    result = evaluate_report(report_run, "(() => { "
+                             "const sentence = $('rows').children[0].children[1]; "
+                             "const details = sentence.children.find("
+                             "n => n.tagName === 'details'); "
+                             "return {summary: details.children[0].textContent, "
+                             "tokens: details.children[1].children.map(n => n.textContent), "
+                             "tags: details.children[1].children[1].children.map(n => n.tagName)}; "
+                             "})()")
+    assert result["summary"] == "2 target tokens"
+    assert result["tokens"] == ['" wor" · 1.250 bits · token ID 0',
+                                '"<img src=x>\\n" · 1.750 bits']
+    assert result["tags"] == ["code", "#text"]

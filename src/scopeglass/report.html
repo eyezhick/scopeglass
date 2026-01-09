@@ -14,7 +14,7 @@ h1{font:normal clamp(42px,6vw,76px)/1.05 Georgia,serif;letter-spacing:-2px;max-w
 .fork{display:grid;grid-template-columns:1fr 1fr;gap:20px;font:13px/1.7 ui-monospace,monospace}.fork>div{border-top:1px solid #9ba995;padding-top:12px}.muted{color:var(--muted)}
 section{margin-top:44px} .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{border-top:2px solid var(--green);padding:18px 0}.number{font:38px Georgia,serif}.unit{font:12px ui-monospace,monospace;color:var(--muted)}.card p{font-size:13px;margin:12px 0}
 .ci{font:12px ui-monospace,monospace}.dotplot{width:100%;height:84px;display:block} .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin:20px 0}label{font-size:12px;color:var(--muted);display:grid;gap:6px}select,input,button{background:transparent;color:var(--ink);border:1px solid #9ba995;padding:9px 12px;font:14px system-ui;max-width:100%}button{cursor:pointer}button:hover{background:#e9ede3}button:disabled{opacity:.5;cursor:default}#empty-state{padding:18px;border-left:3px solid var(--orange)}
-.table-wrap{overflow:auto;border-top:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}th,td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{font:11px ui-monospace,monospace;color:var(--muted);text-transform:uppercase;white-space:nowrap}td:first-child{min-width:150px}td:nth-child(2){min-width:340px} .bits{white-space:nowrap;font:14px ui-monospace,monospace}.token{font:11px ui-monospace,monospace;color:var(--muted);display:block;margin-top:8px}
+.table-wrap{overflow:auto;border-top:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}th,td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{font:11px ui-monospace,monospace;color:var(--muted);text-transform:uppercase;white-space:nowrap}td:first-child{min-width:150px}td:nth-child(2){min-width:340px} .bits{white-space:nowrap;font:14px ui-monospace,monospace}.token-details{font:11px ui-monospace,monospace;color:var(--muted);margin-top:8px;border:0;padding:0}.token-details summary{font-weight:400}.token-details ol{padding-left:24px}.token-details li{padding:3px 0}.token-details code{white-space:pre-wrap}
 details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{cursor:pointer;font-weight:600}pre{font-size:12px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}footer{border-top:1px solid var(--ink);margin-top:48px;padding-top:16px;font-size:12px;color:var(--muted)}a{color:var(--green)} .count{font:12px ui-monospace,monospace;color:var(--muted)}
 :focus-visible{outline:3px solid var(--orange);outline-offset:4px}.skip-link{position:absolute;top:-80px;left:20px;z-index:2;background:var(--paper);padding:10px 16px}.skip-link:focus{top:12px}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .print-note{display:none}
@@ -49,7 +49,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <p class="count" id="overview"></p>
 <div class="cards" id="cards"></div></section>
 <section id="evidence" tabindex="-1"><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
-<p id="search-help" class="muted">Filter sentences by experiment or lexical frame, or search their full text. The effect summaries above always describe the complete run.</p>
+<p id="search-help" class="muted">Filter sentences by experiment or lexical frame, or search their full text. The effect summaries above always describe the complete run. Open token details to inspect the pieces scored inside each highlighted target; sentence surprisal sums these pieces without length normalization.</p>
 <div class="controls"><label>Experiment<select id="experiment"><option value="all">All experiments</option></select></label><label>Lexical frame<select id="item"><option value="all">All frames</option></select></label><label>Find a word<input id="search" aria-describedby="search-help" placeholder="hunter, ever, cabinets…" type="search"></label><label>Order<select id="order"><option value="source">Material order</option><option value="high">Surprisal: high to low</option><option value="low">Surprisal: low to high</option><option value="item">Lexical frame</option></select></label><button id="export-csv" type="button">Export filtered CSV</button><button id="reset" type="button">Reset filters</button><span id="count" class="count" aria-live="polite"></span></div>
 <p class="print-note" id="print-note"></p>
 <p id="empty-state" role="status" hidden>No conditions match these filters. Clear the search or reset filters to see the run again.</p>
@@ -201,12 +201,25 @@ function render({printing = false} = {}) {
     const tr = el('tr');
     const condition = el('td');
     condition.append(el('b', row.item),
+      el('div', experimentNames[row.experiment] || row.experiment, 'muted'),
       el('div', Object.entries(row.factors).map(([key, value]) => key + ': ' + value).join(' / '), 'muted'));
     const sentence = el('td');
     sentence.append(document.createTextNode(row.context + ' '), el('mark', row.target.trim()),
       document.createTextNode(row.spillover));
-    sentence.append(el('span', row.tokens.map(token => JSON.stringify(token.text)
-      + ' ' + token.bits.toFixed(3) + 'b').join(' · '), 'token'));
+    const details = el('details', undefined, 'token-details');
+    details.open = printing;
+    details.append(el('summary', row.tokens.length + ' target token'
+      + (row.tokens.length === 1 ? '' : 's')));
+    const tokens = el('ol');
+    for (const token of row.tokens) {
+      const entry = el('li');
+      entry.append(el('code', JSON.stringify(token.text)),
+        document.createTextNode(' · ' + token.bits.toFixed(3) + ' bits'
+          + (token.id === undefined ? '' : ' · token ID ' + token.id)));
+      tokens.append(entry);
+    }
+    details.append(tokens);
+    sentence.append(details);
     tr.append(condition, sentence, el('td', row.surprisal_bits.toFixed(3) + ' bits', 'bits'));
     $('rows').append(tr);
   }
