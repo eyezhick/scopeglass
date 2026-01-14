@@ -260,3 +260,14 @@ def test_token_details_preserve_whitespace_and_optional_zero_id(report_run):
     assert result["tokens"] == ['" wor" · 1.250 bits · token ID 0',
                                 '"<img src=x>\\n" · 1.750 bits']
     assert result["tags"] == ["code", "#text"]
+
+
+def test_method_notes_and_frame_counts_follow_run_experiments(report_run):
+    result = evaluate_report(report_run, "({intro: $('intro').textContent, "
+                             "frames: $('frame-counts').textContent, "
+                             "np_s_hidden: $('method-np_s').hidden, "
+                             "garden_hidden: $('method-garden_path').hidden})")
+    assert "2 controlled experiments" in result["intro"]
+    assert result["frames"] == "NP/S ambiguity: 2 frames · Agreement attraction: 1 frame"
+    assert result["np_s_hidden"] is False
+    assert result["garden_hidden"] is True

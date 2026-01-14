@@ -36,7 +36,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <main>
 <header><div class="brand">scopeglass<span style="color:var(--green)"> /</span></div><div class="eyebrow">An instrument for model grammar</div></header>
 <h1>Reading between<br>the branches.</h1>
-<p class="intro">A sentence can lead you down the wrong path. Does a language model feel the turn? Controlled experiments in ambiguity, agreement, and scope.</p>
+<p class="intro" id="intro">A sentence can lead you down the wrong path. Does a language model feel the turn? Controlled experiments in ambiguity, agreement, and scope.</p>
 <div class="ribbon" id="provenance"></div>
 <p id="run-kind" class="muted"></p>
 <noscript><p>This interactive report needs JavaScript to display the embedded run. Use the original results JSON for an accessible plain-text record.</p></noscript>
@@ -45,7 +45,7 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 <div class="fork"><div><span class="muted">A plausible early attachment</span><br>[While the hunter [hunted the deer]] …</div><div><span class="muted">The main verb forces reanalysis</span><br>[While the hunter hunted] [the deer <b>ran</b> …]</div></div>
 <p class="muted" style="font-size:13px;margin-bottom:0">The parse sketch illustrates the human-readable hypothesis. It is not a recovered model state.</p></div>
 <section><div class="eyebrow">02 / Effects, not a leaderboard</div><h2>What changed at the critical word?</h2>
-<p class="muted">Surprisal is −log₂ P(target | context). One extra bit means half the probability. Effects below are paired contrasts; the dots are lexical items, and intervals resample whole items. Each plot uses its own symmetric scale around zero.</p>
+<p class="muted">Surprisal is −log₂ P(target | context). One extra bit means half the probability. Effects below are paired contrasts, and intervals resample whole lexical items. Green dots show item effects; the orange point is their mean and the orange line is its 95% bootstrap interval. Each plot uses its own symmetric scale around zero.</p>
 <p class="count" id="overview"></p>
 <div class="cards" id="cards"></div></section>
 <section id="evidence" tabindex="-1"><div class="eyebrow">03 / Inspect the evidence</div><h2>Every sentence. Every score.</h2>
@@ -62,10 +62,12 @@ details{margin-top:25px;border-top:1px solid var(--line);padding:16px 0}summary{
 </div>
 </section>
 <details><summary>How to read these experiments</summary>
-<p><b>Garden paths.</b> Cross an optionally transitive verb with an intransitive control, and a comma with no comma. At the main verb, subtract the control's comma benefit from the ambiguous verb's comma benefit. A positive interaction is compatible with garden-path sensitivity.</p>
-<p><b>Agreement.</b> Cross subject number, distractor number, and verb number. The preference is surprisal(wrong verb) − surprisal(correct verb). The attraction penalty is the loss of this preference when the distractor's number mismatches the subject.</p>
-<p><b>Polarity.</b> Cross negation presence, its location, and ever/often. Measure how much negation changes the preference for ever over often. Scope selectivity is the matrix benefit minus the embedded benefit.</p>
-<p>These are small, authored English materials: 12 frames per experiment. Bootstrap intervals describe this item set, not all language. Verb frequency, plausibility, punctuation, lexical choice, and training overlap remain possible confounds. Surprisal is behavioral evidence; it does not establish that a model represents a particular parse, or that people would show the same effect. Spillover is displayed but not scored.</p>
+<p id="method-garden_path"><b>Garden paths · NP/Z.</b> Cross an optionally transitive verb with an intransitive control, and a comma with no comma. At the main verb, subtract the control's comma benefit from the ambiguous verb's comma benefit. A positive interaction is compatible with garden-path sensitivity.</p>
+<p id="method-agreement"><b>Agreement.</b> Cross subject number, distractor number, and verb number. The preference is surprisal(wrong verb) − surprisal(correct verb). The attraction penalty is the loss of this preference when the distractor's number mismatches the subject.</p>
+<p id="method-polarity"><b>Polarity.</b> Cross negation presence, its location, and ever/often. Measure how much negation changes the preference for ever over often. Scope selectivity is the matrix benefit minus the embedded benefit.</p>
+<p id="method-np_s"><b>NP/S ambiguity.</b> Compare verbs that admit a noun-phrase object or a sentential complement with a clause-selecting control, with and without <i>that</i>. At the embedded verb, subtract the control's complementizer benefit from the ambiguous verb's benefit. A positive interaction is compatible with sensitivity to the temporary object/clause ambiguity; lexical and verb-selection differences remain possible explanations.</p>
+<p id="frame-counts" class="count"></p>
+<p>These are small, authored English materials. Bootstrap intervals describe this item set, not all language. Verb frequency, plausibility, punctuation, lexical choice, and training overlap remain possible confounds. Surprisal is behavioral evidence; it does not establish that a model represents a particular parse, or that people would show the same effect. Spillover is displayed but not scored.</p>
 </details>
 <details><summary>Run provenance & reproducibility</summary>
 <p>Save the complete run, including all sentences, token scores, analysis settings, and metadata.</p>
@@ -98,6 +100,16 @@ for (const experiment of experiments) {
   const option = el('option', experimentNames[experiment] || experiment);
   option.value = experiment;
   $('experiment').append(option);
+}
+$('intro').textContent = 'A sentence can lead you down the wrong path. Does a language model feel the turn? '
+  + experiments.size + ' controlled experiment' + (experiments.size === 1 ? '' : 's')
+  + ' in ambiguity, agreement, and scope.';
+$('frame-counts').textContent = [...experiments].map(experiment => {
+  const count = new Set(run.rows.filter(row => row.experiment === experiment).map(row => row.item)).size;
+  return (experimentNames[experiment] || experiment) + ': ' + count + ' frame' + (count === 1 ? '' : 's');
+}).join(' · ');
+for (const experiment of Object.keys(experimentNames)) {
+  $('method-' + experiment).hidden = !experiments.has(experiment);
 }
 const empirical = run.metadata.empirical === true;
 $('run-kind').textContent = empirical
