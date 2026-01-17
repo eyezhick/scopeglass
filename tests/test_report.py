@@ -6,6 +6,7 @@ import json
 import re
 import shutil
 import subprocess
+from html.parser import HTMLParser
 from importlib.resources import files
 
 import pytest
@@ -271,3 +272,24 @@ def test_method_notes_and_frame_counts_follow_run_experiments(report_run):
     assert result["frames"] == "NP/S ambiguity: 2 frames · Agreement attraction: 1 frame"
     assert result["np_s_hidden"] is False
     assert result["garden_hidden"] is True
+
+
+def test_report_requires_no_external_page_resources(tmp_path, report_run):
+    class Resources(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.urls = []
+
+        def handle_starttag(self, tag, attrs):
+            attributes = dict(attrs)
+            if tag in {"script", "img", "iframe", "audio", "video", "source"}:
+                if "src" in attributes:
+                    self.urls.append(attributes["src"])
+            if tag == "link" and attributes.get("rel") == "stylesheet":
+                self.urls.append(attributes["href"])
+
+    output = tmp_path / "report.html"
+    write_report(report_run, output)
+    parser = Resources()
+    parser.feed(output.read_text())
+    assert parser.urls == []
