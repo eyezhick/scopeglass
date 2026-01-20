@@ -67,3 +67,24 @@ def test_cli_paired_comparison_has_zero_delta_for_identical_runs(tmp_path):
     assert comparison["direction"] == "right_minus_left"
     assert comparison["summary"][0]["estimate"] == 0
     assert comparison["summary"][0]["ci95"] == [0, 0]
+
+
+def test_diagnostics_cli_handles_a_single_frame(tmp_path, capsys):
+    main(["run", "--item", "nps-00", "--out", str(tmp_path), "--bootstrap", "10"])
+    capsys.readouterr()
+    main(["diagnose", str(tmp_path / "results.json")])
+    rows = json.loads(capsys.readouterr().out)
+    assert rows[0]["item"] == "nps-00"
+    assert rows[0]["leave_one_out"] is None
+
+
+def test_report_rejects_corrupt_token_scores(tmp_path):
+    main(["run", "--item", "nps-00", "--out", str(tmp_path), "--bootstrap", "10"])
+    path = tmp_path / "results.json"
+    result = json.loads(path.read_text())
+    result["rows"][0]["tokens"][0]["bits"] += 1
+    path.write_text(json.dumps(result))
+    output = tmp_path / "broken.html"
+    with pytest.raises(SystemExit):
+        main(["report", str(path), "--out", str(output)])
+    assert not output.exists()

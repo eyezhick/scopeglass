@@ -7,7 +7,8 @@ from pathlib import Path
 
 from . import __version__
 from .analysis import analyze
-from .compare import compare_runs
+from .compare import compare_runs, validate_run
+from .diagnostics import item_diagnostics
 from .materials import (
     describe_materials,
     load_csv,
@@ -58,8 +59,20 @@ def main(argv=None):
     compare.add_argument("--out", type=Path)
     compare.add_argument("--bootstrap", type=int, default=2000)
     compare.add_argument("--seed", type=int, default=17)
+    diagnose = commands.add_parser("diagnose", help="Inspect frame effects and leave-one-out means")
+    diagnose.add_argument("input", type=Path)
+    diagnose.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "diagnose":
+            result = item_diagnostics(json.loads(args.input.read_text(encoding="utf-8")))
+            content = json.dumps(result, indent=2, allow_nan=False) + "\n"
+            if args.out:
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+                args.out.write_text(content, encoding="utf-8")
+            else:
+                print(content, end="")
+            return
         if args.command == "compare":
             result = compare_runs(
                 json.loads(args.left.read_text(encoding="utf-8")),
@@ -87,8 +100,14 @@ def main(argv=None):
             print(json.dumps(describe_materials(loader(args.input)), indent=2))
             return
         if args.command == "report":
-            data = json.loads(args.input.read_text())
-            data["summary"] = analyze(data["rows"], **data["analysis"])
+            data = json.loads(args.input.read_text(encoding="utf-8"))
+            validate_run(data)
+            settings = data.get("analysis")
+            if (not isinstance(settings, dict) or set(settings) != {"samples", "seed"}
+                    or type(settings["samples"]) is not int or settings["samples"] < 1
+                    or type(settings["seed"]) is not int):
+                raise ValueError("Run analysis requires positive integer samples and integer seed")
+            data["summary"] = analyze(data["rows"], **settings)
             write_report(data, args.out)
             return
         if args.threads < 1 or args.bootstrap < 1:
