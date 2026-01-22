@@ -1,0 +1,663 @@
+{
+  "schema_version": 1,
+  "kind": "paired_comparison",
+  "direction": "right_minus_left",
+  "analysis": {
+    "samples": 2000,
+    "seed": 17
+  },
+  "metadata": {
+    "left": {
+      "backend": "huggingface",
+      "model": "distilbert/distilgpt2",
+      "revision": "2290a62682d06624634c1f46a6ad5be0f47f38aa",
+      "device": "cpu",
+      "empirical": true,
+      "torch": "2.14.1",
+      "transformers": "4.57.6",
+      "dtype": "torch.float32",
+      "scopeglass": "0.1.0",
+      "python": "3.14.6",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "created_utc": "2026-10-03T07:25:10.719020+00:00",
+      "stimuli_sha256": "b08482960b79dac5eff99c0246055b3172cebf8b9737fdea3dedd5414592395e",
+      "threads": 4,
+      "experiment": "all"
+    },
+    "right": {
+      "backend": "huggingface",
+      "model": "openai-community/gpt2",
+      "revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+      "device": "cpu",
+      "empirical": true,
+      "torch": "2.14.1",
+      "transformers": "4.57.6",
+      "dtype": "torch.float32",
+      "scopeglass": "0.1.0",
+      "python": "3.14.6",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "created_utc": "2026-10-03T07:26:05.068936+00:00",
+      "stimuli_sha256": "b08482960b79dac5eff99c0246055b3172cebf8b9737fdea3dedd5414592395e",
+      "threads": 4,
+      "experiment": "all"
+    }
+  },
+  "summary": [
+    {
+      "key": "np_s",
+      "title": "NP/S disambiguation interaction",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: the missing-that cost is larger after the NP/S-ambiguous verb.",
+      "left_estimate": 1.8985077838102977,
+      "right_estimate": 2.2504175702730813,
+      "estimate": 0.3519097864627838,
+      "ci95": [
+        0.07512901226679483,
+        0.661793662359317
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "nps-00",
+          "left": -0.08982503414154053,
+          "right": 0.5853943824768066,
+          "delta": 0.6752194166183472
+        },
+        {
+          "item": "nps-01",
+          "left": 3.803119659423828,
+          "right": 3.5921099185943604,
+          "delta": -0.21100974082946777
+        },
+        {
+          "item": "nps-02",
+          "left": 0.29239559173583984,
+          "right": 1.3112258911132812,
+          "delta": 1.0188302993774414
+        },
+        {
+          "item": "nps-03",
+          "left": 1.0301861763000488,
+          "right": 1.3904612064361572,
+          "delta": 0.3602750301361084
+        },
+        {
+          "item": "nps-04",
+          "left": 6.9111998081207275,
+          "right": 6.552524089813232,
+          "delta": -0.3586757183074951
+        },
+        {
+          "item": "nps-05",
+          "left": 5.835189342498779,
+          "right": 6.988724231719971,
+          "delta": 1.1535348892211914
+        },
+        {
+          "item": "nps-06",
+          "left": 0.37283825874328613,
+          "right": 0.16549158096313477,
+          "delta": -0.20734667778015137
+        },
+        {
+          "item": "nps-07",
+          "left": 0.5570709705352783,
+          "right": 0.8648850917816162,
+          "delta": 0.3078141212463379
+        },
+        {
+          "item": "nps-08",
+          "left": 2.6707308292388916,
+          "right": 3.263157844543457,
+          "delta": 0.5924270153045654
+        },
+        {
+          "item": "nps-09",
+          "left": 1.255937099456787,
+          "right": 2.308257579803467,
+          "delta": 1.0523204803466797
+        },
+        {
+          "item": "nps-10",
+          "left": 0.010032176971435547,
+          "right": -0.25553321838378906,
+          "delta": -0.2655653953552246
+        },
+        {
+          "item": "nps-11",
+          "left": 0.13321852684020996,
+          "right": 0.2383122444152832,
+          "delta": 0.10509371757507324
+        }
+      ]
+    },
+    {
+      "key": "garden_path",
+      "title": "Garden-path interaction",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: the missing-comma cost is larger after the ambiguous verb.",
+      "left_estimate": 1.0288025009989117,
+      "right_estimate": 4.414341093952923,
+      "estimate": 3.385538592954011,
+      "ci95": [
+        2.040632346984057,
+        4.761637347928869
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "npz-00",
+          "left": 2.507178783416748,
+          "right": 3.4819231033325195,
+          "delta": 0.9747443199157715
+        },
+        {
+          "item": "npz-01",
+          "left": 0.1069192886352539,
+          "right": 4.536284446716309,
+          "delta": 4.429365158081055
+        },
+        {
+          "item": "npz-02",
+          "left": 4.214169025421143,
+          "right": 7.749350547790527,
+          "delta": 3.5351815223693848
+        },
+        {
+          "item": "npz-03",
+          "left": 1.4188146591186523,
+          "right": 9.342610836029053,
+          "delta": 7.9237961769104
+        },
+        {
+          "item": "npz-04",
+          "left": -4.567250609397888,
+          "right": -2.676757335662842,
+          "delta": 1.8904932737350464
+        },
+        {
+          "item": "npz-05",
+          "left": 4.9004343203268945,
+          "right": 4.359572943532839,
+          "delta": -0.5408613767940551
+        },
+        {
+          "item": "npz-06",
+          "left": -4.046112537384033,
+          "right": 2.367274284362793,
+          "delta": 6.413386821746826
+        },
+        {
+          "item": "npz-07",
+          "left": -1.01676607131958,
+          "right": 3.0054211616516113,
+          "delta": 4.022187232971191
+        },
+        {
+          "item": "npz-08",
+          "left": 6.115505218505859,
+          "right": 8.449722290039062,
+          "delta": 2.334217071533203
+        },
+        {
+          "item": "npz-09",
+          "left": 1.2830079961568117,
+          "right": 3.147191013675183,
+          "delta": 1.8641830175183713
+        },
+        {
+          "item": "npz-10",
+          "left": 2.2387242317199707,
+          "right": 8.296506404876709,
+          "delta": 6.057782173156738
+        },
+        {
+          "item": "npz-11",
+          "left": -0.8089942932128906,
+          "right": 0.9129934310913086,
+          "delta": 1.7219877243041992
+        }
+      ]
+    },
+    {
+      "key": "agreement_margin",
+      "title": "Agreement preference",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: the grammatical verb is preferred, averaged across all four contexts.",
+      "left_estimate": 5.377585130433242,
+      "right_estimate": 6.184044579664866,
+      "estimate": 0.8064594492316246,
+      "ci95": [
+        0.49859714799871047,
+        1.100575292110443
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "agr-00",
+          "left": 4.374843806028366,
+          "right": 4.7365866005420685,
+          "delta": 0.3617427945137024
+        },
+        {
+          "item": "agr-01",
+          "left": 5.452656328678131,
+          "right": 6.939180672168732,
+          "delta": 1.4865243434906006
+        },
+        {
+          "item": "agr-02",
+          "left": 5.202011406421661,
+          "right": 6.529936194419861,
+          "delta": 1.3279247879981995
+        },
+        {
+          "item": "agr-03",
+          "left": 6.388574659824371,
+          "right": 6.310819149017334,
+          "delta": -0.07775551080703735
+        },
+        {
+          "item": "agr-04",
+          "left": 5.321492552757263,
+          "right": 6.819684386253357,
+          "delta": 1.4981918334960938
+        },
+        {
+          "item": "agr-05",
+          "left": 5.536322355270386,
+          "right": 6.600724577903748,
+          "delta": 1.0644022226333618
+        },
+        {
+          "item": "agr-06",
+          "left": 5.547597825527191,
+          "right": 6.022147446870804,
+          "delta": 0.47454962134361267
+        },
+        {
+          "item": "agr-07",
+          "left": 5.131406486034393,
+          "right": 5.150841772556305,
+          "delta": 0.01943528652191162
+        },
+        {
+          "item": "agr-08",
+          "left": 5.2592350244522095,
+          "right": 6.445992290973663,
+          "delta": 1.1867572665214539
+        },
+        {
+          "item": "agr-09",
+          "left": 5.106860935688019,
+          "right": 6.3724992871284485,
+          "delta": 1.2656383514404297
+        },
+        {
+          "item": "agr-10",
+          "left": 5.316842198371887,
+          "right": 5.6383233070373535,
+          "delta": 0.3214811086654663
+        },
+        {
+          "item": "agr-11",
+          "left": 5.8931779861450195,
+          "right": 6.64179927110672,
+          "delta": 0.7486212849617004
+        }
+      ]
+    },
+    {
+      "key": "attraction",
+      "title": "Attraction penalty",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: a mismatching distractor weakens preference for the grammatical verb.",
+      "left_estimate": 1.2840316941340764,
+      "right_estimate": 1.942094494899114,
+      "estimate": 0.6580628007650375,
+      "ci95": [
+        0.3017960692445437,
+        1.031028820077578
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "agr-00",
+          "left": 1.3040936589241028,
+          "right": 2.0628947615623474,
+          "delta": 0.7588011026382446
+        },
+        {
+          "item": "agr-01",
+          "left": 1.1449209451675415,
+          "right": 2.933242440223694,
+          "delta": 1.7883214950561523
+        },
+        {
+          "item": "agr-02",
+          "left": 1.2055097818374634,
+          "right": 1.380352258682251,
+          "delta": 0.1748424768447876
+        },
+        {
+          "item": "agr-03",
+          "left": 1.237383484840393,
+          "right": 1.746699333190918,
+          "delta": 0.5093158483505249
+        },
+        {
+          "item": "agr-04",
+          "left": 1.0796492099761963,
+          "right": 2.0247557163238525,
+          "delta": 0.9451065063476562
+        },
+        {
+          "item": "agr-05",
+          "left": 1.2881028652191162,
+          "right": 1.5405738353729248,
+          "delta": 0.2524709701538086
+        },
+        {
+          "item": "agr-06",
+          "left": 0.5204578638076782,
+          "right": 1.3794108033180237,
+          "delta": 0.8589529395103455
+        },
+        {
+          "item": "agr-07",
+          "left": 1.9891873598098755,
+          "right": 1.7423409223556519,
+          "delta": -0.24684643745422363
+        },
+        {
+          "item": "agr-08",
+          "left": 1.3959929943084717,
+          "right": 3.414315342903137,
+          "delta": 2.0183223485946655
+        },
+        {
+          "item": "agr-09",
+          "left": 0.9859756231307983,
+          "right": 1.428242564201355,
+          "delta": 0.44226694107055664
+        },
+        {
+          "item": "agr-10",
+          "left": 2.303384304046631,
+          "right": 2.181378126144409,
+          "delta": -0.12200617790222168
+        },
+        {
+          "item": "agr-11",
+          "left": 0.9537222385406494,
+          "right": 1.4709278345108032,
+          "delta": 0.5172055959701538
+        }
+      ]
+    },
+    {
+      "key": "matrix_licensing",
+      "title": "Matrix licensing benefit",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: matrix negation favors ever over often, relative to the positive control.",
+      "left_estimate": 1.2962124347686768,
+      "right_estimate": 9.539603173732758,
+      "estimate": 8.24339073896408,
+      "ci95": [
+        6.995630863308906,
+        9.576934677362441
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "npi-00",
+          "left": 1.4167289733886719,
+          "right": 10.787290096282959,
+          "delta": 9.370561122894287
+        },
+        {
+          "item": "npi-01",
+          "left": 1.2596826553344727,
+          "right": 7.536945819854736,
+          "delta": 6.277263164520264
+        },
+        {
+          "item": "npi-02",
+          "left": 1.435805320739746,
+          "right": 13.06230616569519,
+          "delta": 11.626500844955444
+        },
+        {
+          "item": "npi-03",
+          "left": 0.7529153823852539,
+          "right": 12.145487070083618,
+          "delta": 11.392571687698364
+        },
+        {
+          "item": "npi-04",
+          "left": 0.855708122253418,
+          "right": 7.072102069854736,
+          "delta": 6.216393947601318
+        },
+        {
+          "item": "npi-05",
+          "left": 1.3827953338623047,
+          "right": 7.477794647216797,
+          "delta": 6.094999313354492
+        },
+        {
+          "item": "npi-06",
+          "left": 1.36798095703125,
+          "right": 9.831958770751953,
+          "delta": 8.463977813720703
+        },
+        {
+          "item": "npi-07",
+          "left": 2.016033172607422,
+          "right": 8.30875825881958,
+          "delta": 6.292725086212158
+        },
+        {
+          "item": "npi-08",
+          "left": 1.6335878372192383,
+          "right": 13.441250085830688,
+          "delta": 11.80766224861145
+        },
+        {
+          "item": "npi-09",
+          "left": 0.48584461212158203,
+          "right": 5.269097328186035,
+          "delta": 4.783252716064453
+        },
+        {
+          "item": "npi-10",
+          "left": 2.3902883529663086,
+          "right": 10.45009469985962,
+          "delta": 8.05980634689331
+        },
+        {
+          "item": "npi-11",
+          "left": 0.5571784973144531,
+          "right": 9.092153072357178,
+          "delta": 8.534974575042725
+        }
+      ]
+    },
+    {
+      "key": "embedded_licensing",
+      "title": "Embedded negation benefit",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: embedded negation also favors ever; it is outside the intended licensing scope.",
+      "left_estimate": 10.971032043298086,
+      "right_estimate": 5.208342343568802,
+      "estimate": -5.762689699729283,
+      "ci95": [
+        -7.664735285937786,
+        -3.608001438031595
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "npi-00",
+          "left": 14.293183088302612,
+          "right": 13.332864165306091,
+          "delta": -0.960318922996521
+        },
+        {
+          "item": "npi-01",
+          "left": 12.365161418914795,
+          "right": 1.7583727836608887,
+          "delta": -10.606788635253906
+        },
+        {
+          "item": "npi-02",
+          "left": 11.90241003036499,
+          "right": 11.49929428100586,
+          "delta": -0.40311574935913086
+        },
+        {
+          "item": "npi-03",
+          "left": 13.260451793670654,
+          "right": 10.782689571380615,
+          "delta": -2.477762222290039
+        },
+        {
+          "item": "npi-04",
+          "left": 10.659291982650757,
+          "right": 0.6008548736572266,
+          "delta": -10.05843710899353
+        },
+        {
+          "item": "npi-05",
+          "left": 9.969424486160278,
+          "right": 0.9225749969482422,
+          "delta": -9.046849489212036
+        },
+        {
+          "item": "npi-06",
+          "left": 9.374249696731567,
+          "right": 1.8605051040649414,
+          "delta": -7.513744592666626
+        },
+        {
+          "item": "npi-07",
+          "left": 13.254012107849121,
+          "right": 3.372365951538086,
+          "delta": -9.881646156311035
+        },
+        {
+          "item": "npi-08",
+          "left": 10.348887205123901,
+          "right": 5.270285606384277,
+          "delta": -5.078601598739624
+        },
+        {
+          "item": "npi-09",
+          "left": 8.943472385406494,
+          "right": 2.061997413635254,
+          "delta": -6.88147497177124
+        },
+        {
+          "item": "npi-10",
+          "left": 12.030860900878906,
+          "right": 10.630464553833008,
+          "delta": -1.4003963470458984
+        },
+        {
+          "item": "npi-11",
+          "left": 5.250979423522949,
+          "right": 0.4078388214111328,
+          "delta": -4.843140602111816
+        }
+      ]
+    },
+    {
+      "key": "scope_selectivity",
+      "title": "Scope selectivity",
+      "interpretation": "Positive: RIGHT has a larger contrast than LEFT; this is not automatically a better model.",
+      "contrast_interpretation": "Positive: matrix negation favors ever more than embedded negation does.",
+      "left_estimate": -9.67481960852941,
+      "right_estimate": 4.331260830163956,
+      "estimate": 14.006080438693365,
+      "ci95": [
+        12.468369423846404,
+        15.356953671574594
+      ],
+      "n_items": 12,
+      "items": [
+        {
+          "item": "npi-00",
+          "left": -12.87645411491394,
+          "right": -2.5455740690231323,
+          "delta": 10.330880045890808
+        },
+        {
+          "item": "npi-01",
+          "left": -11.105478763580322,
+          "right": 5.778573036193848,
+          "delta": 16.88405179977417
+        },
+        {
+          "item": "npi-02",
+          "left": -10.466604709625244,
+          "right": 1.563011884689331,
+          "delta": 12.029616594314575
+        },
+        {
+          "item": "npi-03",
+          "left": -12.5075364112854,
+          "right": 1.362797498703003,
+          "delta": 13.870333909988403
+        },
+        {
+          "item": "npi-04",
+          "left": -9.803583860397339,
+          "right": 6.47124719619751,
+          "delta": 16.27483105659485
+        },
+        {
+          "item": "npi-05",
+          "left": -8.586629152297974,
+          "right": 6.555219650268555,
+          "delta": 15.141848802566528
+        },
+        {
+          "item": "npi-06",
+          "left": -8.006268739700317,
+          "right": 7.971453666687012,
+          "delta": 15.977722406387329
+        },
+        {
+          "item": "npi-07",
+          "left": -11.2379789352417,
+          "right": 4.936392307281494,
+          "delta": 16.174371242523193
+        },
+        {
+          "item": "npi-08",
+          "left": -8.715299367904663,
+          "right": 8.170964479446411,
+          "delta": 16.886263847351074
+        },
+        {
+          "item": "npi-09",
+          "left": -8.457627773284912,
+          "right": 3.2070999145507812,
+          "delta": 11.664727687835693
+        },
+        {
+          "item": "npi-10",
+          "left": -9.640572547912598,
+          "right": -0.18036985397338867,
+          "delta": 9.460202693939209
+        },
+        {
+          "item": "npi-11",
+          "left": -4.693800926208496,
+          "right": 8.684314250946045,
+          "delta": 13.378115177154541
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Move a comma. Move a negation. Explore how language models respond to syntactic ambiguity, agreement, and scope.">
+  <title>Scopeglass — The ambiguity lab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#lab">Skip to the experiment</a>
+<main>
+  <header><a class="wordmark" href="./">scopeglass<span> /</span></a><nav aria-label="Main"><a href="#lab">Experiment</a><a href="#effects">Findings</a><a href="https://github.com/eyezhick/scopeglass">GitHub ↗</a></nav></header>
+  <section class="hero">
+    <div><p class="eyebrow">An open laboratory for model grammar</p><h1>One sentence.<br>Two possible<br><em>worlds.</em></h1><p class="lede">Your mind commits to a reading. One word changes everything. What happens when a language model reaches that same turn?</p><a class="button" href="#lab">Find the turning point <span>↓</span></a></div>
+    <aside class="hero-note"><span class="folio">01 / THE WRONG TURN</span><p>While the hunter hunted the deer <mark>ran</mark> into the woods.</p><div class="parse"><span>FIRST IMPRESSION</span><code>[hunted the deer]</code><span>AFTER “RAN”</span><code>[hunted] [the deer ran]</code></div><p class="small">A sketch of the linguistic hypothesis, not a reconstruction of the model’s hidden state.</p></aside>
+  </section>
+  <div class="strap"><span>4 experiments</span><span>48 lexical frames</span><span>2 measured models</span><span>No API key needed</span></div>
+  <section id="lab" class="lab">
+    <div class="section-head"><div><p class="eyebrow">01 / Change one thing</p><h2>Put the sentence<br>under a microscope.</h2></div><p>Choose a condition. The highlighted region is exactly what was scored. Each number comes from a saved model run.</p></div>
+    <div class="tabs" role="group" aria-label="Experiment">
+      <button data-experiment="garden_path" aria-pressed="true">01 <b>Garden paths</b><span>NP/Z ambiguity</span></button>
+      <button data-experiment="np_s" aria-pressed="false">02 <b>Objects or clauses?</b><span>NP/S ambiguity</span></button>
+      <button data-experiment="agreement" aria-pressed="false">03 <b>The nearest noun</b><span>Agreement attraction</span></button>
+      <button data-experiment="polarity" aria-pressed="false">04 <b>Where “no” reaches</b><span>Polarity & scope</span></button>
+    </div>
+    <div class="workbench">
+      <div class="workspace">
+        <div class="selectors"><label>Model<select id="model"><option value="distilgpt2">DistilGPT-2</option><option value="gpt2">GPT-2</option></select></label><label>Sentence frame<select id="frame"></select></label></div>
+        <p id="hypothesis" class="hypothesis"></p>
+        <div id="factors" class="factors"></div>
+        <div id="sentence" class="sentence" aria-live="polite"></div>
+        <div class="token-heading">Inside the scored region</div><div id="tokens" class="tokens"></div>
+      </div>
+      <aside class="score-panel"><p class="eyebrow">Critical-region surprisal</p><div><strong id="score">—</strong><span> bits</span></div><p id="probability"></p><hr><p id="reading"></p><span class="measured">● Measured model output</span><p class="small">The browser explores saved results. It does not run inference on new text.</p></aside>
+    </div>
+    <div class="condition-chart"><div><h3>See the controls, too.</h3><p>All conditions for this lexical frame. A longer bar means the scored region was less expected. Compare the same target across conditions; different targets can have different lexical baselines.</p></div><div id="conditions" role="table" aria-label="Condition surprisal in bits"></div></div>
+    <p id="status" class="status" role="status">Loading measured runs…</p>
+  </section>
+  <section class="explanation"><div><p class="eyebrow">02 / The unit of surprise</p><h2>One more bit.<br>Half as likely.</h2><p>Surprisal turns a probability into an additive scale. We sum it across all tokens in the critical word, without scoring the context or the rest of the sentence.</p></div><div class="calculator"><div class="formula">S = −log₂ P</div><label for="bits">Try a surprisal value <output id="bits-value">4 bits</output></label><input id="bits" type="range" min="0" max="20" step="1" value="4"><p id="bits-probability">Probability: 6.25% · 1 in 16</p><p class="small">An illustration of the formula, independent of the measured runs above.</p></div></section>
+  <section id="effects"><div class="section-head"><div><p class="eyebrow">03 / Across the whole set</p><h2>A pattern, or<br>one good example?</h2></div><p>Each estimate is a within-frame contrast, averaged across 12 frames. Intervals resample whole frames. No single sentence stands in for the experiment.</p></div><div id="effect-cards" class="effect-cards"></div><p class="small">Each plot has its own symmetric scale around zero. Dots are frame effects; the line is the 95% bootstrap interval. These intervals describe a small authored set, not all English.</p></section>
+  <section class="takeaway"><p class="eyebrow">04 / A result worth questioning</p><h2>Negation in the wrong place<br>can still be a powerful cue.</h2><p>In the first DistilGPT-2 run, embedded “no” favored “ever” more than matrix “no” did—the reverse of the intended structural prediction. Is it proximity, an alternative parse, or something about these materials? The raw conditions make that question inspectable.</p><a href="https://github.com/eyezhick/scopeglass/blob/main/docs/methods.md">Read the methods and limitations ↗</a></section>
+  <section class="reproduce"><div><p class="eyebrow">05 / Take it apart</p><h2>The experiment<br>is yours to rerun.</h2><p>Source, original sentences, resolved model revisions, token scores, and paired comparisons. All available in the repository.</p><div class="links"><a class="button" href="https://github.com/eyezhick/scopeglass">Explore the repository ↗</a><a id="report-link" href="distilgpt2-report.html">Full report</a><a id="data-link" href="data/distilgpt2.json" download>Raw JSON ↓</a></div></div><pre><code>pip install -e '.[models]'
+scopeglass run \
+  --backend hf \
+  --experiment np_s \
+  --out runs/np-s</code></pre></section>
+  <footer><span class="wordmark">scopeglass /</span><p>Built to make model behavior inspectable.<br>English materials. Exploratory evidence. MIT licensed.</p><a href="https://github.com/eyezhick/scopeglass/blob/main/docs/np-s.md">Theory & design ↗</a></footer>
+</main>
+<noscript><p>This demo needs JavaScript to explore the saved runs. The <a href="https://github.com/eyezhick/scopeglass">source repository</a> contains readable examples and raw results.</p></noscript>
+</body></html>
