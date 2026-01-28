@@ -25,7 +25,7 @@ The interaction is:
 ```
 
 Positive values mean that *that* reduces critical-region surprisal more after
-the NP/S-ambiguous verb. The control removes a generic complementizer benefit;
+the NP/S-ambiguous verb. The control subtracts the complementizer benefit measured after the control verb;
 it cannot remove every difference between the matrix verbs. *Insisted* is a
 shared control across all frames, so these twelve lexical frames are not twelve
 independent samples of control-verb vocabulary. The amount of object bias also
