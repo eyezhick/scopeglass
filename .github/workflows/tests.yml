@@ -14,9 +14,15 @@ jobs:
         with:
           python-version: '${{ matrix.python }}'
       - run: python -m pip install -e '.[dev]'
-      - run: ruff check src tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: ruff check src tests scripts
+      - run: node --check demo/app.js
       - run: pytest -q
       - run: scopeglass run --out runs/toy
+      - run: python scripts/build_demo.py
+      - run: git diff --exit-code -- demo
       - run: python -m build
   scoring:
     runs-on: ubuntu-latest
