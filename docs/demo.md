@@ -4,9 +4,8 @@ The interactive demo lets you change experimental conditions and inspect their
 measured surprisal. It serves two saved model runs, their paired comparison, and
 two standalone reports. It does not send text to a model or require an API key.
 
-[Hosted owner preview](https://scopeglass-lab.fam-lee200408.chatgpt.site)
-requires the owner's sign-in. The repository and all demo assets are public;
-the hosted preview currently has private access.
+[Open the live demo](https://eyezhick.github.io/scopeglass/).
+The demo is public on GitHub Pages and requires no sign-in.
 
 ## Run it locally
 
@@ -54,4 +53,6 @@ Source assets are `demo/index.html`, `demo/style.css`, and `demo/app.js`.
 Measurements live under `examples/distilgpt2-v2/` and `examples/gpt2-v2/`.
 `tests/test_demo.py` checks that the built bundle preserves those measurements,
 resolves its local links, and pairs the models in the documented direction.
-The hosted copy is built from this same directory using static Sites hosting.
+The hosted copy is built by `.github/workflows/pages.yml` and published to GitHub
+Pages on pushes to `main`. The workflow checks the demo bundle before publishing;
+all assets use relative paths so they work under the `/scopeglass/` project path.

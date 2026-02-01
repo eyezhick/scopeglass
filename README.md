@@ -100,9 +100,8 @@ one model a better grammarian.
 
 ## Play with the lab
 
-[Open the hosted owner preview](https://scopeglass-lab.fam-lee200408.chatgpt.site)
-— currently private; owner sign-in required. The local demo below is available
-to everyone from the public repository.
+[Open the live ambiguity lab](https://eyezhick.github.io/scopeglass/)
+— public, with no sign-in required.
 
 ![The interactive NP/S workbench, showing measured GPT-2 scores](docs/assets/demo.jpg)
 
