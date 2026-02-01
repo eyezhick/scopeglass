@@ -100,6 +100,12 @@ one model a better grammarian.
 
 ## Play with the lab
 
+[Open the hosted owner preview](https://scopeglass-lab.fam-lee200408.chatgpt.site)
+— currently private; owner sign-in required. The local demo below is available
+to everyone from the public repository.
+
+![The interactive NP/S workbench, showing measured GPT-2 scores](docs/assets/demo.jpg)
+
 The browser explores **saved, measured runs**. It doesn't score new text. Switch
 models without losing your sentence or condition; inspect every control; compare
 frame effects with the aggregate; move the surprisal slider to see what a bit
@@ -116,7 +122,7 @@ Open `http://localhost:8000`. The full reports are standalone HTML files with
 search, sorting, token details, pagination, CSV export, and printing:
 [DistilGPT-2](examples/distilgpt2-v2/report.html) /
 [GPT-2](examples/gpt2-v2/report.html). Download either HTML file and open it locally;
-GitHub's source viewer doesn't execute it. [Report guide →](docs/report-guide.md)
+GitHub's source viewer doesn't execute it. [Report guide →](docs/report-guide.md) · [Demo guide →](docs/demo.md)
 
 ## Run an experiment
 
